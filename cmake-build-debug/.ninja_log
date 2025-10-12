@@ -1,0 +1,21 @@
+# ninja log v5
+8	98	7818313424103660	CMakeFiles/einkaufsprojekt.dir/druck_einkauf.c.obj	29414ebc5e3f7dd3
+14	109	7818313424220716	CMakeFiles/einkaufsprojekt.dir/main.c.obj	a7039adc2db5b267
+3	102	7818313424151367	CMakeFiles/einkaufsprojekt.dir/edit_list.c.obj	6ec2bd0f344dbbdd
+109	221	7818313425305240	bin/einkaufsprojekt.exe	c671830a7f8c39f2
+2	186	7818314931073336	build.ninja	e8fa521179f2b2c6
+1	165	7818314931073336	build.ninja	e8fa521179f2b2c6
+2	106	7818314932899186	CMakeFiles/einkaufsprojekt.dir/druck_einkauf.c.obj	d990d332df52d2d5
+8	107	7818314932904180	CMakeFiles/einkaufsprojekt.dir/main.c.obj	14bb69ecfadd723d
+14	121	7818314933058405	CMakeFiles/einkaufsprojekt.dir/edit_list.c.obj	31017e04eadc491e
+121	250	7818314934281390	bin/einkaufsprojekt.exe	c671830a7f8c39f2
+2	123	7818727929406616	CMakeFiles/einkaufsprojekt.dir/main.c.obj	14bb69ecfadd723d
+123	429	7818727932431986	bin/einkaufsprojekt.exe	c671830a7f8c39f2
+3	241	7819978388899016	CMakeFiles/einkaufsprojekt.dir/main.c.obj	14bb69ecfadd723d
+242	564	7819978392073853	bin/einkaufsprojekt.exe	c671830a7f8c39f2
+3	96	7819978697237939	CMakeFiles/einkaufsprojekt.dir/main.c.obj	14bb69ecfadd723d
+97	219	7819978698413031	bin/einkaufsprojekt.exe	c671830a7f8c39f2
+2	109	7819979224803308	CMakeFiles/einkaufsprojekt.dir/edit_list.c.obj	31017e04eadc491e
+109	229	7819979225970832	bin/einkaufsprojekt.exe	c671830a7f8c39f2
+2	89	7819980171517396	CMakeFiles/einkaufsprojekt.dir/main.c.obj	14bb69ecfadd723d
+90	217	7819980172737909	bin/einkaufsprojekt.exe	c671830a7f8c39f2
