@@ -3,6 +3,7 @@
 #include <string.h>
 #include "druck_einkauf.h"
 #include "edit_list.h"
+#include "edit_data.h"
 
 static void clear_screen(void) {
 #if defined(_WIN32)
@@ -54,7 +55,8 @@ int main(void) {
         printf("==========================\n");
         printf("[1] Einkaufsliste anzeigen\n");
         printf("[2] Liste bearbeiten\n");
-        printf("[3] Beenden\n");
+        printf("[3] CSV-Datenbanken bearbeiten\n");
+        printf("[4] Beenden\n");
         printf("==========================\n");
 
         int choice = read_int("Auswahl: ");
@@ -73,6 +75,10 @@ int main(void) {
                 break;
 
             case 3:
+                edit_data_menu("databases");
+                break;
+
+            case 4:
                 printf("Programm wird beendet.\n");
                 return 0;
 
