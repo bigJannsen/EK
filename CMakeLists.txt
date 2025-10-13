@@ -36,6 +36,9 @@ set(HEADERS
 add_executable(einkaufsprojekt ${SOURCES} ${HEADERS}
         crud_database.c)
 
+target_compile_definitions(einkaufsprojekt PRIVATE
+        DATA_DIRECTORY="${CMAKE_SOURCE_DIR}/data")
+
 # ---- (Optional) Ausgabepfad für Executable festlegen ----
 # Alles landet in /build/bin/
 set_target_properties(einkaufsprojekt PROPERTIES

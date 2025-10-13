@@ -83,6 +83,9 @@ static void choose_database(const char *directory) {
 }
 
 void edit_data_menu(const char *directory) {
+    if (!directory || directory[0] == '\0') {
+        directory = DATA_DIRECTORY;
+    }
     for (;;) {
         printf("\n=========== Datenbankverwaltung ===========\n");
         printf("[1] Datenbank aus Ordner laden\n");

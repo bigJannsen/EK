@@ -74,7 +74,7 @@ int main(void) {
                 break;
 
             case 3:
-                edit_dta_menu("databases");
+                edit_data_menu(DATA_DIRECTORY);
                 break;
 
             case 4:
