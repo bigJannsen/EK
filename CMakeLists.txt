@@ -19,11 +19,15 @@ set(SOURCES
         main.c
         druck_einkauf.c
         edit_list.c
+        edit_data.c
+        crud_database.c
 )
 
 set(HEADERS
         druck_einkauf.h
         edit_list.h
+        edit_data.h
+        crud_database.h
 )
 
 # ---- Ausführbare Datei erstellen ----
@@ -41,5 +45,3 @@ if (WIN32)
 else()
     message(STATUS "Zielplattform: Linux / macOS")
 endif()
-
-
