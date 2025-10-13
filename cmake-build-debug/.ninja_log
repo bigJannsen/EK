@@ -1,0 +1,8 @@
+# ninja log v5
+2	106	7818314932899186	CMakeFiles/einkaufsprojekt.dir/druck_einkauf.c.obj	d990d332df52d2d5
+2	106	7820832894567983	CMakeFiles/einkaufsprojekt.dir/main.c.obj	14bb69ecfadd723d
+2	109	7819979224803308	CMakeFiles/einkaufsprojekt.dir/edit_list.c.obj	31017e04eadc491e
+208	483	7820832898292920	bin/einkaufsprojekt.exe	e98412d67e5f666e
+13	207	7820832895582135	CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj	b995356216e0d66d
+2	195	7820839818659991	build.ninja	e8fa521179f2b2c6
+8	112	7820832894633773	CMakeFiles/einkaufsprojekt.dir/edit_data.c.obj	5d90254219675c5e

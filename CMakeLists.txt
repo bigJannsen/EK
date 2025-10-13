@@ -21,6 +21,7 @@ set(SOURCES
         edit_list.c
         edit_data.c
         crud_database.c
+        crud_database.c
 )
 
 set(HEADERS
@@ -28,10 +29,12 @@ set(HEADERS
         edit_list.h
         edit_data.h
         crud_database.h
+        crud_database.c
 )
 
 # ---- Ausführbare Datei erstellen ----
-add_executable(einkaufsprojekt ${SOURCES} ${HEADERS})
+add_executable(einkaufsprojekt ${SOURCES} ${HEADERS}
+        crud_database.c)
 
 # ---- (Optional) Ausgabepfad für Executable festlegen ----
 # Alles landet in /build/bin/
