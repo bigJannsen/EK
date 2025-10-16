@@ -50,36 +50,38 @@ int main(void) {
 
     for (;;) {
         //clear_screen();
-        printf("==========================\n");
-        printf("   Einkaufsprojekt v1.0\n");
-        printf("==========================\n");
-        printf("[1] Einkaufsliste anzeigen\n");
-        printf("[2] Liste bearbeiten\n");
-        printf("[3] CSV-Datenbanken bearbeiten\n");
-        printf("[4] Beenden\n");
-        printf("==========================\n");
-
-        int choice = read_int("Auswahl: ");
+        printf("==================\n");
+        printf("      Hauptmenü\n");
+        printf("-------------------------------\n");
+        printf("<0> Ende\n");
+        printf("<1> Artikel und Preise editieren\n");
+        printf("<2> Einkauf editieren\n");
+        printf("<3> Preise vergleichen\n");
+        printf("<4> Einkaufszettel drucken\n\n");
+        int choice = read_int("Ihre Auswahl: ");
 
         switch (choice) {
+            case 0:
+                printf("Programm wird beendet.\n");
+                return 0;
+
             case 1:
-                //clear_screen();
-                druck_einkauf(filename);
-                wait_enter();
-                break;
-
-            case 2:
-                //clear_screen();
-                edit_list(filename);   // kehrt nach Speichern/Zurueck zurueck
-                break;
-
-            case 3:
                 edit_data_menu(DATA_DIRECTORY);
                 break;
 
+            case 2:
+                edit_list(filename);
+                break;
+
+            case 3:
+                printf("Diese Funktion ist derzeit nicht verfügbar.\n");
+                wait_enter();
+                break;
+
             case 4:
-                printf("Programm wird beendet.\n");
-                return 0;
+                druck_einkauf(filename);
+                wait_enter();
+                break;
 
             default:
                 printf("Ungueltige Auswahl.\n");
