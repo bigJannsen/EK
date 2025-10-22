@@ -92,8 +92,36 @@ int main(void) {
     }
 }
 
+/*     Hauptfakten:
+ *
+ *      main()-definierte Arrays nutzen
+ *      Top-Down nutzen
+ *
+ *
+ */
+
 
 /*  Statusupdate:
- *      -> Liste lädt nicht ganz
- *      -> Menüstruktur wackelig
+ *
+ *      Artikelpreisliste & Anbietername limitieren
+ *      10000 Einträge      64 Zeichen
+ *
+ *      --- Artikel und Preise editieren ---
+ *       Menüpunkte - User Experience Bedienung intuitiver machen. Einträge überprüfen (bsp: bei Stück nur Zahl ohne g oder l
+ *      !!! Bei Artikelauswahl die richtige ID nehmen und nicht "1-basig"
+ *      Bei Löschen oder bearbeiten den Eintrag zuerst anzeigen, dann bearbeiten und nicht während bearbeiten anzeigen
+ *      Opt: Datenbank merken wenn bei 1 ausgewählt
+ *
+ *      --- Feature: Preise vergleichen ---
+ *       - Erstellen
+ *       ---> Wichtige Sachen
+ *       - Einkaufsliste vergleichen oder Direktvergleich
+ *          -> Preis runterbrechen auf Stück/Gramm/Literpreis und dann Vergleichen
+ *          -> Dann sagen welches Produkt am günstigsten ist
+ *
+ *      --- Einkaufszettel drucken ---
+ *
+ *          -> Menü: .txt ausgeben oder drucken
+ *              -> Schönes Layout wie bei Rechnung indem EKZettel reingeprintet wird
+ *
  */
