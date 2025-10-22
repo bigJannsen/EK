@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "edit_list.h"
+#include "crud_database.h"
+#include "edit_data.h"
 
 #define MAX_ITEMS 100
-#define MAX_LEN 128
+#define MAX_LEN 256
+#define MAX_FILES 128
 
 // --- Hilfsfunktion: Bildschirm löschen ---
 static void clear_screen() {
@@ -56,27 +59,113 @@ static void print_list(char items[MAX_ITEMS][MAX_LEN], int count) {
         printf("(Die Liste ist leer.)\n");
     } else {
         for (int i = 0; i < count; i++) {
-            printf("%2d | %s\n", i + 1, items[i]);
+            const char *sep = strchr(items[i], '|');
+            if (sep) {
+                size_t article_len = (size_t)(sep - items[i]);
+                char article[MAX_LEN];
+                if (article_len >= sizeof article) article_len = sizeof article - 1;
+                strncpy(article, items[i], article_len);
+                article[article_len] = '\0';
+                const char *provider = sep + 1;
+                printf("%2d | %s (%s)\n", i + 1, article, provider);
+            } else {
+                printf("%2d | %s\n", i + 1, items[i]);
+            }
         }
     }
     printf("=========================================\n");
 }
 
 // --- Artikel hinzufügen ---
-static void add_item(char items[MAX_ITEMS][MAX_LEN], int *count) {
+static void flush_input(void) {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {
+    }
+}
+
+static const char *basename_of(const char *path) {
+    const char *slash = strrchr(path, '/');
+#ifdef _WIN32
+    const char *backslash = strrchr(path, '\\');
+    if (!slash || (backslash && backslash > slash)) slash = backslash;
+#endif
+    if (!slash) return path;
+    return slash + 1;
+}
+
+static int select_database(Database *db) {
+    char files[MAX_FILES][DB_MAX_FILENAME];
+    int count = list_csv_files(DATA_DIRECTORY, files, MAX_FILES);
+    if (count <= 0) {
+        printf("Keine Datenbank gefunden.\n");
+        printf("\nWeiter mit Enter ...");
+        getchar();
+        return -1;
+    }
+    printf("Verfügbare Datenbanken:\n");
+    for (int i = 0; i < count; i++) {
+        printf("[%d] %s\n", i + 1, basename_of(files[i]));
+    }
+    printf("Auswahl: ");
+    int choice;
+    if (scanf("%d", &choice) != 1 || choice < 1 || choice > count) {
+        printf("Ungültige Auswahl.\n");
+        flush_input();
+        printf("\nWeiter mit Enter ...");
+        getchar();
+        return -1;
+    }
+    flush_input();
+    if (load_database(files[choice - 1], db) != 0) {
+        printf("Datei konnte nicht geladen werden.\n");
+        printf("\nWeiter mit Enter ...");
+        getchar();
+        return -1;
+    }
+    return 0;
+}
+
+static DatabaseEntry *find_entry(Database *db, int id) {
+    if (!db) return NULL;
+    for (int i = 0; i < db->count; i++) {
+        if (db->entries[i].id == id) return &db->entries[i];
+    }
+    return NULL;
+}
+
+static void add_item(Database *db, char items[MAX_ITEMS][MAX_LEN], int *count) {
     if (*count >= MAX_ITEMS) {
         printf("Die Liste ist voll! (max. %d Einträge)\n", MAX_ITEMS);
         printf("\nWeiter mit Enter ...");
         getchar(); getchar();
         return;
     }
-
-    printf("Neuer Artikel: ");
-    getchar(); // Eingabepuffer leeren
-    fgets(items[*count], MAX_LEN, stdin);
-    items[*count][strcspn(items[*count], "\r\n")] = '\0'; // Zeilenende entfernen
+    if (!db || db->count == 0) {
+        printf("Keine Datenbank geladen.\n");
+        printf("\nWeiter mit Enter ...");
+        getchar(); getchar();
+        return;
+    }
+    print_database(db);
+    printf("ID des Artikels: ");
+    int id;
+    if (scanf("%d", &id) != 1) {
+        printf("Ungültige Eingabe!\n");
+        flush_input();
+        printf("\nWeiter mit Enter ...");
+        getchar(); getchar();
+        return;
+    }
+    flush_input();
+    DatabaseEntry *entry = find_entry(db, id);
+    if (!entry) {
+        printf("ID nicht gefunden.\n");
+        printf("\nWeiter mit Enter ...");
+        getchar(); getchar();
+        return;
+    }
+    snprintf(items[*count], MAX_LEN, "%s|%s", entry->artikel, entry->anbieter);
     (*count)++;
-
     printf("\nArtikel hinzugefügt!\n");
     printf("\nWeiter mit Enter ...");
     getchar();
@@ -97,7 +186,7 @@ static void remove_item(char items[MAX_ITEMS][MAX_LEN], int *count) {
     int num;
     if (scanf("%d", &num) != 1 || num < 1 || num > *count) {
         printf("Ungültige Auswahl!\n");
-        while (getchar() != '\n'); // Eingabepuffer leeren
+        while (getchar() != '\n');
         printf("\nWeiter mit Enter ...");
         getchar();
         return;
@@ -117,6 +206,10 @@ static void remove_item(char items[MAX_ITEMS][MAX_LEN], int *count) {
 void edit_list(const char *filename) {
     char items[MAX_ITEMS][MAX_LEN];
     int count = load_list(filename, items);
+    Database db;
+    if (select_database(&db) != 0) {
+        return;
+    }
     int choice = 0;
 
     while (1) {
@@ -145,7 +238,7 @@ void edit_list(const char *filename) {
                 break;
 
             case 2:
-                add_item(items, &count);
+                add_item(&db, items, &count);
                 break;
 
             case 3:
