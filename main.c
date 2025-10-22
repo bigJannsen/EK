@@ -4,6 +4,7 @@
 #include "druck_einkauf.h"
 #include "edit_list.h"
 #include "edit_data.h"
+#include "preis_vergleich.h"
 
 static void clear_screen(void) {
 #if defined(_WIN32)
@@ -56,8 +57,8 @@ int main(void) {
         printf("<0> Ende\n");
         printf("<1> Artikel und Preise editieren\n");
         printf("<2> Einkauf editieren\n");
-        printf("<3> Preise vergleichen\n");
-        printf("<4> Einkaufszettel drucken\n\n");
+        printf("<3> Einkaufszettel drucken\n");
+        printf("<4> Preise vergleichen\n\n");
         int choice = read_int("Ihre Auswahl: ");
 
         switch (choice) {
@@ -74,12 +75,12 @@ int main(void) {
                 break;
 
             case 3:
-                printf("Diese Funktion ist derzeit nicht verfügbar.\n");
+                druck_einkauf(filename);
                 wait_enter();
                 break;
 
             case 4:
-                druck_einkauf(filename);
+                compare_prices_menu(DATA_DIRECTORY);
                 wait_enter();
                 break;
 
