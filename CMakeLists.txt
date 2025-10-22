@@ -21,7 +21,7 @@ set(SOURCES
         edit_list.c
         edit_data.c
         crud_database.c
-        crud_database.c
+        preis_vergleich.c
 )
 
 set(HEADERS
@@ -29,7 +29,7 @@ set(HEADERS
         edit_list.h
         edit_data.h
         crud_database.h
-        crud_database.c
+        preis_vergleich.h
 )
 
 # ---- Ausführbare Datei erstellen ----
