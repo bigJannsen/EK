@@ -1,53 +1,34 @@
 cmake_minimum_required(VERSION 3.10)
-
-# Projektname und Sprache
 project(Einkaufsprojekt C)
 
-# C-Standard (modern, stabil)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Optional: kompiliere mit Warnungen (empfohlen für sauberen Code)
 if (MSVC)
     add_compile_options(/W4)
 else()
     add_compile_options(-Wall -Wextra -pedantic)
 endif()
 
-# ---- Quellcode-Dateien ----
 set(SOURCES
         main.c
-        druck_einkauf.c
-        edit_list.c
-        edit_data.c
-        crud_database.c
-        preis_vergleich.c
-)
-
-set(HEADERS
-        druck_einkauf.h
-        edit_list.h
-        edit_data.h
-        crud_database.h
-        preis_vergleich.h
-)
-
-# ---- Ausführbare Datei erstellen ----
-add_executable(einkaufsprojekt ${SOURCES} ${HEADERS}
+        web_server.c
         crud_database.c)
 
+add_executable(einkaufsprojekt ${SOURCES})
+
+file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/data" DATA_DIR_PATH)
+file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/web" WEB_DIR_PATH)
+file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/einkaufsliste.txt" SHOPPING_LIST_PATH_VALUE)
+
 target_compile_definitions(einkaufsprojekt PRIVATE
-        DATA_DIRECTORY="${CMAKE_SOURCE_DIR}/data")
+        DATA_DIRECTORY="${DATA_DIR_PATH}"
+        WEB_DIRECTORY="${WEB_DIR_PATH}"
+        SHOPPING_LIST_PATH="${SHOPPING_LIST_PATH_VALUE}")
 
-# ---- (Optional) Ausgabepfad für Executable festlegen ----
-# Alles landet in /build/bin/
 set_target_properties(einkaufsprojekt PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# ---- (Optional) zusätzliche Definitionen für Windows/Linux ----
 if (WIN32)
-    message(STATUS "Zielplattform: Windows")
-else()
-    message(STATUS "Zielplattform: Linux / macOS")
+    target_link_libraries(einkaufsprojekt PRIVATE ws2_32)
 endif()
