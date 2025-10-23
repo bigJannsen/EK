@@ -53,7 +53,7 @@ Windows:
 3. Projektordner öffnen, "cmake -S . -B build" ausführen, dann "cmake --build build"
 4. Im Ordner build/bin "einkaufsprojekt.exe" starten und im Browser http://localhost:8081 öffnen.
 
-Linux (Debian/Ubuntu): !!WICHTIG FÜR KURREK!!
+Linux (Debian/Ubuntu): !!WICHTIG FÜR K**EK!!
 1. Pakete installieren: sudo apt update && sudo apt install build-essential cmake.
 2. Projektordner öffnen und "cmake -S . -B build" ausführen.
 3. Mit "cmake --build build" kompilieren.
