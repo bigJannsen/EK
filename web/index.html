@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <title>Einkaufsmanager</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="page-header">
+    <h1>Einkaufsmanager</h1>
+    <p>Verwalte Artikel, Einkaufslisten und Preisvergleiche bequem im Browser.</p>
+</header>
+<main class="layout">
+    <section class="panel" id="database-panel">
+        <h2>Datenbankverwaltung</h2>
+        <div class="panel-content">
+            <label for="database-select">Datenbankdatei</label>
+            <div class="database-select">
+                <select id="database-select"></select>
+                <button type="button" id="reload-database">Aktualisieren</button>
+            </div>
+            <div class="table-container">
+                <table id="database-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Artikel</th>
+                        <th>Anbieter</th>
+                        <th>Preis (€)</th>
+                        <th>Menge</th>
+                        <th>Aktionen</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="forms-grid">
+                <form id="add-entry-form" class="form-card">
+                    <h3>Neuen Eintrag hinzufügen</h3>
+                    <label>ID
+                        <input type="number" id="add-id" required min="0" step="1">
+                    </label>
+                    <label>Artikel
+                        <input type="text" id="add-artikel" required>
+                    </label>
+                    <label>Anbieter
+                        <input type="text" id="add-anbieter" required>
+                    </label>
+                    <label>Preis (€)
+                        <input type="number" id="add-preis" required min="0" step="0.01">
+                    </label>
+                    <label>Menge
+                        <input type="text" id="add-menge" required>
+                    </label>
+                    <button type="submit">Eintrag hinzufügen</button>
+                </form>
+                <form id="edit-entry-form" class="form-card" hidden>
+                    <h3>Eintrag bearbeiten</h3>
+                    <label>ID
+                        <input type="number" id="edit-id" readonly>
+                    </label>
+                    <label>Artikel
+                        <input type="text" id="edit-artikel" required>
+                    </label>
+                    <label>Anbieter
+                        <input type="text" id="edit-anbieter" required>
+                    </label>
+                    <label>Preis (€)
+                        <input type="number" id="edit-preis" required min="0" step="0.01">
+                    </label>
+                    <label>Menge
+                        <input type="text" id="edit-menge" required>
+                    </label>
+                    <div class="form-actions">
+                        <button type="submit">Änderungen speichern</button>
+                        <button type="button" id="cancel-edit">Abbrechen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    <section class="panel" id="list-panel">
+        <h2>Einkaufsliste</h2>
+        <div class="panel-content">
+            <div class="table-container">
+                <table id="list-table">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Artikel</th>
+                        <th>Anbieter</th>
+                        <th>Aktionen</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="forms-grid">
+                <form id="add-list-form" class="form-card">
+                    <h3>Zur Liste hinzufügen</h3>
+                    <label>Artikel
+                        <input type="text" id="list-add-artikel" required>
+                    </label>
+                    <label>Anbieter (optional)
+                        <input type="text" id="list-add-anbieter">
+                    </label>
+                    <button type="submit">Hinzufügen</button>
+                </form>
+                <form id="edit-list-form" class="form-card" hidden>
+                    <h3>Listeneintrag bearbeiten</h3>
+                    <input type="hidden" id="list-edit-index">
+                    <label>Artikel
+                        <input type="text" id="list-edit-artikel" required>
+                    </label>
+                    <label>Anbieter (optional)
+                        <input type="text" id="list-edit-anbieter">
+                    </label>
+                    <div class="form-actions">
+                        <button type="submit">Speichern</button>
+                        <button type="button" id="cancel-list-edit">Abbrechen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    <section class="panel" id="compare-panel">
+        <h2>Preisvergleich</h2>
+        <div class="panel-content">
+            <div class="compare-grid">
+                <form id="single-compare-form" class="form-card">
+                    <h3>Einzelvergleich</h3>
+                    <label>Erster Artikel
+                        <select id="compare-first"></select>
+                    </label>
+                    <label>Zweiter Artikel
+                        <select id="compare-second"></select>
+                    </label>
+                    <label>Menge (Einheit wie in Artikel)
+                        <input type="number" id="compare-amount" required min="0" step="0.01">
+                    </label>
+                    <button type="submit">Vergleichen</button>
+                    <output id="single-compare-result" class="result-box"></output>
+                </form>
+                <form id="list-compare-form" class="form-card">
+                    <h3>Liste optimieren</h3>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="apply-best-offers"> Optimale Anbieter in die Liste übernehmen
+                    </label>
+                    <button type="submit">Analyse starten</button>
+                    <div id="list-compare-result" class="result-box"></div>
+                </form>
+            </div>
+        </div>
+    </section>
+</main>
+<footer class="page-footer">
+    <p>Server läuft lokal auf <span id="server-address">http://localhost:8080</span></p>
+</footer>
+<script src="/static/app.js" defer></script>
+</body>
+</html>
