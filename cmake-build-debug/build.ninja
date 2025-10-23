@@ -50,32 +50,26 @@ cmake_ninja_workdir = C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/cmak
 build cmake_object_order_depends_target_einkaufsprojekt: phony || CMakeFiles/einkaufsprojekt.dir
 
 build CMakeFiles/einkaufsprojekt.dir/main.c.obj: C_COMPILER__einkaufsprojekt_unscanned_Debug C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/main.c || cmake_object_order_depends_target_einkaufsprojekt
+  DEFINES = -DDATA_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DSHOPPING_LIST_PATH=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DWEB_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\"
   DEP_FILE = CMakeFiles\einkaufsprojekt.dir\main.c.obj.d
   FLAGS = -g -std=gnu11 -fdiagnostics-color=always -Wall -Wextra -pedantic
+  INCLUDES = -IC:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/include
   OBJECT_DIR = CMakeFiles\einkaufsprojekt.dir
   OBJECT_FILE_DIR = CMakeFiles\einkaufsprojekt.dir
 
-build CMakeFiles/einkaufsprojekt.dir/druck_einkauf.c.obj: C_COMPILER__einkaufsprojekt_unscanned_Debug C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/druck_einkauf.c || cmake_object_order_depends_target_einkaufsprojekt
-  DEP_FILE = CMakeFiles\einkaufsprojekt.dir\druck_einkauf.c.obj.d
+build CMakeFiles/einkaufsprojekt.dir/web_server.c.obj: C_COMPILER__einkaufsprojekt_unscanned_Debug C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web_server.c || cmake_object_order_depends_target_einkaufsprojekt
+  DEFINES = -DDATA_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DSHOPPING_LIST_PATH=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DWEB_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\"
+  DEP_FILE = CMakeFiles\einkaufsprojekt.dir\web_server.c.obj.d
   FLAGS = -g -std=gnu11 -fdiagnostics-color=always -Wall -Wextra -pedantic
-  OBJECT_DIR = CMakeFiles\einkaufsprojekt.dir
-  OBJECT_FILE_DIR = CMakeFiles\einkaufsprojekt.dir
-
-build CMakeFiles/einkaufsprojekt.dir/edit_list.c.obj: C_COMPILER__einkaufsprojekt_unscanned_Debug C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/edit_list.c || cmake_object_order_depends_target_einkaufsprojekt
-  DEP_FILE = CMakeFiles\einkaufsprojekt.dir\edit_list.c.obj.d
-  FLAGS = -g -std=gnu11 -fdiagnostics-color=always -Wall -Wextra -pedantic
-  OBJECT_DIR = CMakeFiles\einkaufsprojekt.dir
-  OBJECT_FILE_DIR = CMakeFiles\einkaufsprojekt.dir
-
-build CMakeFiles/einkaufsprojekt.dir/edit_data.c.obj: C_COMPILER__einkaufsprojekt_unscanned_Debug C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/edit_data.c || cmake_object_order_depends_target_einkaufsprojekt
-  DEP_FILE = CMakeFiles\einkaufsprojekt.dir\edit_data.c.obj.d
-  FLAGS = -g -std=gnu11 -fdiagnostics-color=always -Wall -Wextra -pedantic
+  INCLUDES = -IC:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/include
   OBJECT_DIR = CMakeFiles\einkaufsprojekt.dir
   OBJECT_FILE_DIR = CMakeFiles\einkaufsprojekt.dir
 
 build CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj: C_COMPILER__einkaufsprojekt_unscanned_Debug C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/crud_database.c || cmake_object_order_depends_target_einkaufsprojekt
+  DEFINES = -DDATA_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DSHOPPING_LIST_PATH=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DWEB_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\"
   DEP_FILE = CMakeFiles\einkaufsprojekt.dir\crud_database.c.obj.d
   FLAGS = -g -std=gnu11 -fdiagnostics-color=always -Wall -Wextra -pedantic
+  INCLUDES = -IC:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/include
   OBJECT_DIR = CMakeFiles\einkaufsprojekt.dir
   OBJECT_FILE_DIR = CMakeFiles\einkaufsprojekt.dir
 
@@ -87,9 +81,9 @@ build CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj: C_COMPILER__einkaufspr
 #############################################
 # Link the executable bin\einkaufsprojekt.exe
 
-build bin/einkaufsprojekt.exe: C_EXECUTABLE_LINKER__einkaufsprojekt_Debug CMakeFiles/einkaufsprojekt.dir/main.c.obj CMakeFiles/einkaufsprojekt.dir/druck_einkauf.c.obj CMakeFiles/einkaufsprojekt.dir/edit_list.c.obj CMakeFiles/einkaufsprojekt.dir/edit_data.c.obj CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj
+build bin/einkaufsprojekt.exe: C_EXECUTABLE_LINKER__einkaufsprojekt_Debug CMakeFiles/einkaufsprojekt.dir/main.c.obj CMakeFiles/einkaufsprojekt.dir/web_server.c.obj CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj
   FLAGS = -g
-  LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
+  LINK_LIBRARIES = -lws2_32  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\einkaufsprojekt.dir
   POST_BUILD = cd .
   PRE_LINK = cd .

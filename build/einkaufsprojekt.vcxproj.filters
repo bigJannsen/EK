@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\niema\CLionProjects\ITAPROJEKT_V1.0.3-CMAKE\main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\niema\CLionProjects\ITAPROJEKT_V1.0.3-CMAKE\web_server.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\niema\CLionProjects\ITAPROJEKT_V1.0.3-CMAKE\crud_database.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\niema\CLionProjects\ITAPROJEKT_V1.0.3-CMAKE\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{2DE57A6D-30B7-389D-AF97-EA079C4BF034}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,7 +1,4 @@
-ID,Artikelname,Anbietername,Preis_in_ct,Menge
-1,Milch 1,5%,Aldi,95,1000ml
-2,Milch 1,5%,Lidl,99,1000ml
-3,Butter,Aldi,199,250g
+3,Butter,Aldi,199,400g
 4,Butter,Lidl,209,250g
 5,Eier 10er Freiland,Aldi,289,10St
 6,Eier 10er Freiland,Lidl,279,10St
@@ -29,10 +26,6 @@ ID,Artikelname,Anbietername,Preis_in_ct,Menge
 28,Joghurt Erdbeere,Lidl,69,150g
 29,Quark Magerstufe,Aldi,89,250g
 30,Quark Magerstufe,Lidl,99,250g
-31,Wasser still 1,5L,Aldi,25,1500ml
-32,Wasser still 1,5L,Lidl,29,1500ml
-33,Cola 1,25L,Aldi,95,1250ml
-34,Cola 1,25L,Lidl,99,1250ml
 35,Orangensaft 1L,Aldi,149,1000ml
 36,Orangensaft 1L,Lidl,159,1000ml
 37,Paprika Mix,Aldi,249,500g
@@ -49,3 +42,4 @@ ID,Artikelname,Anbietername,Preis_in_ct,Menge
 48,Spülmittel Lemon,Lidl,95,500ml
 49,Butterkekse,Aldi,119,200g
 50,Butterkekse,Lidl,125,200g
+51,Eiweißpulver,ESN,5000,100g

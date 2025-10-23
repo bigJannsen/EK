@@ -8,13 +8,12 @@ const state = {
 function formatEuroFromCent(value) {
     return (value / 100).toFixed(2).replace('.', ',');
 }
-
 function toCentFromEuro(value) {
     const number = parseFloat(String(value).replace(',', '.'));
     if (Number.isNaN(number)) return null;
     return Math.round(number * 100);
 }
-
+// NICHT ANFASSEN; ICH WEISS NICHT WIE ES LÄUFT, ABER ES LÄUFT!!!!!!!!!!!!!!!
 async function apiFetch(path, options = {}) {
     const response = await fetch(path, options);
     const contentType = response.headers.get('content-type') || '';

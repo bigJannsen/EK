@@ -1,5 +1,4 @@
 #include "web_server.h"
-
 #include "crud_database.h"
 
 #include <stdio.h>
@@ -12,9 +11,11 @@
 
 #ifdef _WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 typedef SOCKET socket_t;
+
 #define close_socket closesocket
 #else
 #include <sys/types.h>
@@ -40,7 +41,7 @@ typedef int socket_t;
 #define SHOPPING_LIST_PATH "einkaufsliste.txt"
 #endif
 
-#define SERVER_PORT 8080
+#define SERVER_PORT 8081
 #define MAX_REQUEST_SIZE 65536
 #define MAX_PARAMS 64
 #define MAX_KEY_LEN 64

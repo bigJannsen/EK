@@ -1,0 +1,10 @@
+^C:\USERS\NIEMA\CLIONPROJECTS\ITAPROJEKT_V1.0.3-CMAKE\BUILD\CMAKEFILES\A7C1EB7D9115887AB5D042784531225F\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE -BC:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/build/Einkaufsprojekt.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
