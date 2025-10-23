@@ -117,3 +117,18 @@ EK/
 ├─ druck_einkauf.c
 └─ web_server.c
 
+-------------- TODO ----------------
+
+### To-Do-Liste
+
+- [ ] Ordnerstruktur verbessern (src/, include/, data/, web/)
+- [ ] config.h für Port & Pfade erstellen
+- [ ] Logging-System hinzufügen
+- [ ] Einheitliches Error-Handling (enum error_t)
+- [ ] JSON-Ausgabe über cJSON einbauen
+- [ ] API-Funktionen (api_get_list, api_add_item, …)
+- [ ] CORS-Header setzen
+- [ ] Frontend-Fehlerbehandlung mit .catch
+- [ ] Unit Tests (Unity oder cmocka)
+- [ ] Speicherprüfung mit Valgrind
+- [ ] Dockerfile anlegen
