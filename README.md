@@ -30,7 +30,7 @@ Das Ziel ist es, den Einkaufsprozess zu digitalisieren und strukturierter zu ges
 - Einkaufsliste verwalten – Artikel hinzufügen, bearbeiten, löschen  
 - CRUD-Datenoperationen – Create, Read, Update, Delete auf Artikeldaten  
 - Preisvergleich – vergleicht Preise verschiedener Produkte  
-- Webserver – optionales Frontend im Browser  
+- Webserver – optionales Frontend im Browser --> Technologieschema: MVC-Controller
 - Druckfunktion – erzeugt eine ausgabefertige Einkaufsliste  
 
 ---
