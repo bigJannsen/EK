@@ -7,36 +7,35 @@
  * Gibt den Inhalt einer gespeicherten Einkaufsliste aus.
  * Die Datei wird zeilenweise gelesen und mit Zeilennummern ausgegeben.
  */
-void druck_einkauf(const char *filename) {
-    FILE *file = fopen(filename, "r");
+void druck_einkauf(const char *dateiname) {
+    FILE *datei = fopen(dateiname, "r");
 
-
-    if (file == NULL) {
-        printf("Fehler: Die Datei '%s' konnte nicht geöffnet werden.\n", filename);
+    if (datei == NULL) {
+        printf("Fehler: Die Datei '%s' konnte nicht geöffnet werden.\n", dateiname);
         printf("Bitte stelle sicher, dass sie existiert oder bereits angelegt wurde.\n");
         return;
     }
 
     printf("=========================================\n");
-    printf("        Einkaufsliste: %s\n", filename);
+    printf("        Einkaufsliste: %s\n", dateiname);
     printf("=========================================\n");
 
-    char line[256];
-    int line_num = 0;
-    int empty = 1;
+    char zeile[256];
+    int zeilennummer = 0;
+    int leer = 1;
 
-    while (fgets(line, sizeof(line), file)) {
-        empty = 0;
+    while (fgets(zeile, sizeof(zeile), datei)) {
+        leer = 0;
         // Entfernt das Zeilenende (\n), falls vorhanden
-        line[strcspn(line, "\r\n")] = '\0';
-        printf("%2d | %s\n", ++line_num, line);
+        zeile[strcspn(zeile, "\r\n")] = '\0';
+        printf("%2d | %s\n", ++zeilennummer, zeile);
     }
 
-    if (empty) {
+    if (leer) {
         printf("(Die Einkaufsliste ist leer.)\n");
     }
 
     printf("=========================================\n");
 
-    fclose(file);
+    fclose(datei);
 }

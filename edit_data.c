@@ -5,90 +5,90 @@
 #include "edit_data.h"
 #include "crud_database.h"
 
-#define MAX_FILES 128
+#define MAX_DATEIEN 128
 
-static void wait_for_enter(void) {
+static void warte_auf_enter(void) {
     printf("\nWeiter mit Enter ...");
     int c;
     while ((c = getchar()) != '\n' && c != EOF) {
     }
 }
 
-static void read_line(char *buf, size_t size) {
-    if (!buf || size == 0) return;
-    if (!fgets(buf, (int)size, stdin)) {
-        buf[0] = '\0';
+static void lese_zeile(char *puffer, size_t groesse) {
+    if (!puffer || groesse == 0) return;
+    if (!fgets(puffer, (int)groesse, stdin)) {
+        puffer[0] = '\0';
         clearerr(stdin);
         return;
     }
-    buf[strcspn(buf, "\r\n")] = '\0';
+    puffer[strcspn(puffer, "\r\n")] = '\0';
 }
 
-static int read_choice(const char *prompt) {
-    char buffer[32];
+static int lese_auswahl(const char *hinweis) {
+    char puffer[32];
     for (;;) {
-        printf("%s", prompt);
-        read_line(buffer, sizeof buffer);
-        if (buffer[0] == '\0') continue;
-        char *endptr = NULL;
-        long v = strtol(buffer, &endptr, 10);
-        if (endptr && *endptr == '\0') return (int)v;
+        printf("%s", hinweis);
+        lese_zeile(puffer, sizeof puffer);
+        if (puffer[0] == '\0') continue;
+        char *endstelle = NULL;
+        long wert = strtol(puffer, &endstelle, 10);
+        if (endstelle && *endstelle == '\0') return (int)wert;
     }
 }
 
-static const char *basename_of(const char *path) {
-    const char *slash = strrchr(path, '/');
+static const char *basisname_von(const char *pfad) {
+    const char *schraegstrich = strrchr(pfad, '/');
 #ifdef _WIN32
-    const char *backslash = strrchr(path, '\\');
-    if (!slash || (backslash && backslash > slash)) slash = backslash;
+    const char *rueckwaertsschrägstrich = strrchr(pfad, '\\');
+    if (!schraegstrich || (rueckwaertsschrägstrich && rueckwaertsschrägstrich > schraegstrich)) schraegstrich = rueckwaertsschrägstrich;
 #endif
-    if (!slash) return path;
-    return slash + 1;
+    if (!schraegstrich) return pfad;
+    return schraegstrich + 1;
 }
 
-static int handle_database(const char *filepath, Database *db) {
-    if (!db) return -1;
-    if (load_database(filepath, db) != 0) {
+static int behandle_datenbankdatei(const char *dateipfad, Datenbank *datenbank) {
+    if (!datenbank) return -1;
+    if (lade_datenbank(dateipfad, datenbank) != 0) {
         printf("Datei konnte nicht geladen werden.\n");
-        wait_for_enter();
+        warte_auf_enter();
         return -1;
     }
     return 0;
 }
 
-static int choose_database(const char *directory, Database *db) {
-    char files[MAX_FILES][DB_MAX_FILENAME];
-    int count = list_csv_files(directory, files, MAX_FILES);
-    if (count < 0) {
+static int waehle_datenbank(const char *verzeichnis, Datenbank *datenbank) {
+    char dateien[MAX_DATEIEN][DB_MAX_DATEINAME];
+    int anzahl = liste_csv_dateien(verzeichnis, dateien, MAX_DATEIEN);
+    if (anzahl < 0) {
         printf("Ordner konnte nicht gelesen werden.\n");
-        wait_for_enter();
+        warte_auf_enter();
         return -1;
     }
-    if (count == 0) {
+    if (anzahl == 0) {
         printf("Keine CSV-Dateien gefunden.\n");
-        wait_for_enter();
+        warte_auf_enter();
         return -1;
     }
     printf("Verfügbare Datenbanken:\n");
-    for (int i = 0; i < count; i++) {
-        printf("[%d] %s\n", i + 1, basename_of(files[i]));
+    for (int i = 0; i < anzahl; i++) {
+        printf("[%d] %s\n", i + 1, basisname_von(dateien[i]));
     }
-    int choice = read_choice("Auswahl: ");
-    if (choice < 1 || choice > count) {
+    int auswahl = lese_auswahl("Auswahl: ");
+    if (auswahl < 1 || auswahl > anzahl) {
         printf("Ungültige Auswahl.\n");
-        wait_for_enter();
+        warte_auf_enter();
         return -1;
     }
-    return handle_database(files[choice - 1], db);
+    return behandle_datenbankdatei(dateien[auswahl - 1], datenbank);
 }
 
-void edit_data_menu(const char *directory) {
-    if (!directory || directory[0] == '\0') {
-        directory = DATA_DIRECTORY;
+void bearbeite_daten_menue(const char *verzeichnis) {
+    if (!verzeichnis || verzeichnis[0] == '\0') {
+        verzeichnis = DATEN_VERZEICHNIS;
     }
-    Database db;
-    int db_loaded = 0;
-    int dirty = 0;
+    Datenbank datenbank;
+    int datenbank_geladen = 0;
+    int geaendert = 0;
     for (;;) {
         printf("\n===========================================\n");
         printf("Artikel und Preise editieren\n");
@@ -100,141 +100,141 @@ void edit_data_menu(const char *directory) {
         printf("<4> Artikel/Preis hinzufuegen (ehem. Unterpunkt von Eintrag bearbeiten) \n");
         printf("<5> Artikel/Preis aendern (ehem. Unterpunkt von Eintrag bearbeiten) \n");
         printf("<6> Artikel/Preis auflisten (ehem. Einträge anzeigen) \n");
-        int choice = read_choice("Ihre Auswahl: ");
-        switch (choice) {
+        int auswahl = lese_auswahl("Ihre Auswahl: ");
+        switch (auswahl) {
             case 0:
-                if (db_loaded && dirty) {
+                if (datenbank_geladen && geaendert) {
                     printf("Es gibt ungespeicherte Änderungen. Trotzdem verlassen? (j/n): ");
-                    char answer[8];
-                    read_line(answer, sizeof answer);
-                    if (!(answer[0] == 'j' || answer[0] == 'J')) {
+                    char antwort[8];
+                    lese_zeile(antwort, sizeof antwort);
+                    if (!(antwort[0] == 'j' || antwort[0] == 'J')) {
                         break;
                     }
                 }
                 return;
             case 1:
-                if (choose_database(directory, &db) == 0) {
-                    db_loaded = 1;
-                    dirty = 0;
+                if (waehle_datenbank(verzeichnis, &datenbank) == 0) {
+                    datenbank_geladen = 1;
+                    geaendert = 0;
                     printf("Datei geladen.\n");
                 }
                 break;
             case 2:
-                if (!db_loaded) {
+                if (!datenbank_geladen) {
                     printf("Keine Datei geladen.\n");
                     break;
                 }
-                if (save_database(&db) == 0) {
-                    dirty = 0;
+                if (speichere_datenbank(&datenbank) == 0) {
+                    geaendert = 0;
                     printf("Gespeichert.\n");
                 } else {
                     printf("Speichern fehlgeschlagen.\n");
                 }
                 break;
             case 3:
-                if (!db_loaded) {
+                if (!datenbank_geladen) {
                     printf("Keine Datei geladen.\n");
                     break;
                 }
-                if (db.count == 0) {
+                if (datenbank.anzahl == 0) {
                     printf("Keine Einträge vorhanden.\n");
                     break;
                 }
-                print_database(&db);
+                zeige_datenbank(&datenbank);
                 {
-                    int index = read_choice("Eintragsnummer (1-basig): ");
-                    if (index < 1 || index > db.count) {
+                    int position = lese_auswahl("Eintragsnummer (1-basig): ");
+                    if (position < 1 || position > datenbank.anzahl) {
                         printf("Ungültige Auswahl.\n");
                         break;
                     }
-                    for (int i = index; i < db.count; i++) {
-                        db.entries[i - 1] = db.entries[i];
+                    for (int i = position; i < datenbank.anzahl; i++) {
+                        datenbank.eintraege[i - 1] = datenbank.eintraege[i];
                     }
-                    db.count--;
-                    dirty = 1;
+                    datenbank.anzahl--;
+                    geaendert = 1;
                     printf("Eintrag gelöscht.\n");
                 }
                 break;
             case 4:
-                if (!db_loaded) {
+                if (!datenbank_geladen) {
                     printf("Keine Datei geladen.\n");
                     break;
                 }
-                if (db.count >= DB_MAX_ENTRIES) {
+                if (datenbank.anzahl >= DB_MAX_EINTRAEGE) {
                     printf("Kein Platz für weitere Einträge.\n");
                     break;
                 }
                 {
-                    char buffer[DB_MAX_TEXT];
-                    DatabaseEntry *entry = &db.entries[db.count];
+                    char puffer[DB_MAX_TEXTLAENGE];
+                    DatenbankEintrag *eintrag = &datenbank.eintraege[datenbank.anzahl];
                     printf("ID: ");
-                    read_line(buffer, sizeof buffer);
-                    if (buffer[0] == '\0') {
+                    lese_zeile(puffer, sizeof puffer);
+                    if (puffer[0] == '\0') {
                         printf("ID benötigt.\n");
                         break;
                     }
-                    char *endptr = NULL;
-                    long id = strtol(buffer, &endptr, 10);
-                    if (!endptr || *endptr != '\0') {
+                    char *endstelle = NULL;
+                    long kennung = strtol(puffer, &endstelle, 10);
+                    if (!endstelle || *endstelle != '\0') {
                         printf("Ungültige ID.\n");
                         break;
                     }
-                    entry->id = (int)id;
+                    eintrag->id = (int)kennung;
                     printf("Artikel: ");
-                    read_line(entry->artikel, sizeof entry->artikel);
-                    if (entry->artikel[0] == '\0') {
+                    lese_zeile(eintrag->artikel, sizeof eintrag->artikel);
+                    if (eintrag->artikel[0] == '\0') {
                         printf("Artikel benötigt.\n");
                         break;
                     }
                     printf("Anbieter: ");
-                    read_line(entry->anbieter, sizeof entry->anbieter);
+                    lese_zeile(eintrag->anbieter, sizeof eintrag->anbieter);
                     printf("Preis in ct: ");
-                    read_line(buffer, sizeof buffer);
-                    if (buffer[0] == '\0') {
+                    lese_zeile(puffer, sizeof puffer);
+                    if (puffer[0] == '\0') {
                         printf("Preis benötigt.\n");
                         break;
                     }
-                    endptr = NULL;
-                    long preis = strtol(buffer, &endptr, 10);
-                    if (!endptr || *endptr != '\0') {
+                    endstelle = NULL;
+                    long preis = strtol(puffer, &endstelle, 10);
+                    if (!endstelle || *endstelle != '\0') {
                         printf("Ungültiger Preis.\n");
                         break;
                     }
-                    entry->preis_ct = (int)preis;
+                    eintrag->preis_ct = (int)preis;
                     printf("Menge: ");
-                    read_line(entry->menge, sizeof entry->menge);
-                    db.count++;
-                    dirty = 1;
+                    lese_zeile(eintrag->menge, sizeof eintrag->menge);
+                    datenbank.anzahl++;
+                    geaendert = 1;
                     printf("Eintrag hinzugefügt.\n");
                 }
                 break;
             case 5:
-                if (!db_loaded) {
+                if (!datenbank_geladen) {
                     printf("Keine Datei geladen.\n");
                     break;
                 }
-                if (db.count == 0) {
+                if (datenbank.anzahl == 0) {
                     printf("Keine Einträge vorhanden.\n");
                     break;
                 }
-                print_database(&db);
+                zeige_datenbank(&datenbank);
                 {
-                    int index = read_choice("Eintragsnummer (1-basig): ");
-                    if (index < 1 || index > db.count) {
+                    int position = lese_auswahl("Eintragsnummer (1-basig): ");
+                    if (position < 1 || position > datenbank.anzahl) {
                         printf("Ungültige Auswahl.\n");
                         break;
                     }
-                    if (edit_database_entry(&db, index - 1) == 0) {
-                        dirty = 1;
+                    if (bearbeite_datenbankeintrag(&datenbank, position - 1) == 0) {
+                        geaendert = 1;
                     }
                 }
                 break;
             case 6:
-                if (!db_loaded) {
+                if (!datenbank_geladen) {
                     printf("Keine Datei geladen.\n");
                     break;
                 }
-                print_database(&db);
+                zeige_datenbank(&datenbank);
                 break;
             default:
                 printf("Ungültige Auswahl.\n");

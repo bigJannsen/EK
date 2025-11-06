@@ -5,12 +5,12 @@
 #include "crud_database.h"
 #include "edit_data.h"
 
-#define MAX_ITEMS 100
-#define MAX_LEN 256
-#define MAX_FILES 128
+#define MAX_LISTENEINTRAEGE 100
+#define MAX_ZEICHEN 256
+#define MAX_DATEIEN 128
 
 // --- Hilfsfunktion: Bildschirm löschen ---
-static void clear_screen() {
+static void loesche_bildschirm() {
 #ifdef _WIN32
     system("cls");
 #else
@@ -19,57 +19,57 @@ static void clear_screen() {
 }
 
 // --- Liest vorhandene Liste ein ---
-static int load_list(const char *filename, char items[MAX_ITEMS][MAX_LEN]) {
-    FILE *file = fopen(filename, "r");
-    int count = 0;
+static int lade_liste(const char *dateiname, char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN]) {
+    FILE *datei = fopen(dateiname, "r");
+    int anzahl = 0;
 
-    if (file == NULL) {
+    if (datei == NULL) {
         return 0; // Datei existiert noch nicht → leere Liste
     }
 
-    while (fgets(items[count], MAX_LEN, file) && count < MAX_ITEMS) {
-        items[count][strcspn(items[count], "\r\n")] = '\0'; // Zeilenende entfernen
-        count++;
+    while (fgets(eintraege[anzahl], MAX_ZEICHEN, datei) && anzahl < MAX_LISTENEINTRAEGE) {
+        eintraege[anzahl][strcspn(eintraege[anzahl], "\r\n")] = '\0'; // Zeilenende entfernen
+        anzahl++;
     }
 
-    fclose(file);
-    return count;
+    fclose(datei);
+    return anzahl;
 }
 
 // --- Speichert Liste ---
-static void save_list(const char *filename, char items[MAX_ITEMS][MAX_LEN], int count) {
-    FILE *file = fopen(filename, "w");
-    if (!file) {
+static void speichere_liste(const char *dateiname, char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], int anzahl) {
+    FILE *datei = fopen(dateiname, "w");
+    if (!datei) {
         perror("Fehler beim Speichern der Datei");
         return;
     }
 
-    for (int i = 0; i < count; i++) {
-        fprintf(file, "%s\n", items[i]);
+    for (int i = 0; i < anzahl; i++) {
+        fprintf(datei, "%s\n", eintraege[i]);
     }
-    fclose(file);
+    fclose(datei);
 }
 
 // --- Zeigt Liste an ---
-static void print_list(char items[MAX_ITEMS][MAX_LEN], int count) {
+static void zeige_liste(char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], int anzahl) {
     printf("=========================================\n");
     printf("          Aktuelle Einkaufsliste\n");
     printf("=========================================\n");
-    if (count == 0) {
+    if (anzahl == 0) {
         printf("(Die Liste ist leer.)\n");
     } else {
-        for (int i = 0; i < count; i++) {
-            const char *sep = strchr(items[i], '|');
-            if (sep) {
-                size_t article_len = (size_t)(sep - items[i]);
-                char article[MAX_LEN];
-                if (article_len >= sizeof article) article_len = sizeof article - 1;
-                strncpy(article, items[i], article_len);
-                article[article_len] = '\0';
-                const char *provider = sep + 1;
-                printf("%2d | %s (%s)\n", i + 1, article, provider);
+        for (int i = 0; i < anzahl; i++) {
+            const char *trenner = strchr(eintraege[i], '|');
+            if (trenner) {
+                size_t artikel_laenge = (size_t)(trenner - eintraege[i]);
+                char artikel[MAX_ZEICHEN];
+                if (artikel_laenge >= sizeof artikel) artikel_laenge = sizeof artikel - 1;
+                strncpy(artikel, eintraege[i], artikel_laenge);
+                artikel[artikel_laenge] = '\0';
+                const char *anbieter = trenner + 1;
+                printf("%2d | %s (%s)\n", i + 1, artikel, anbieter);
             } else {
-                printf("%2d | %s\n", i + 1, items[i]);
+                printf("%2d | %s\n", i + 1, eintraege[i]);
             }
         }
     }
@@ -77,46 +77,46 @@ static void print_list(char items[MAX_ITEMS][MAX_LEN], int count) {
 }
 
 // --- Artikel hinzufügen ---
-static void flush_input(void) {
+static void leere_eingabe(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF) {
     }
 }
 
-static const char *basename_of(const char *path) {
-    const char *slash = strrchr(path, '/');
+static const char *basisname_von(const char *pfad) {
+    const char *schraegstrich = strrchr(pfad, '/');
 #ifdef _WIN32
-    const char *backslash = strrchr(path, '\\');
-    if (!slash || (backslash && backslash > slash)) slash = backslash;
+    const char *rueckwaertsschrägstrich = strrchr(pfad, '\\');
+    if (!schraegstrich || (rueckwaertsschrägstrich && rueckwaertsschrägstrich > schraegstrich)) schraegstrich = rueckwaertsschrägstrich;
 #endif
-    if (!slash) return path;
-    return slash + 1;
+    if (!schraegstrich) return pfad;
+    return schraegstrich + 1;
 }
 
-static int select_database(Database *db) {
-    char files[MAX_FILES][DB_MAX_FILENAME];
-    int count = list_csv_files(DATA_DIRECTORY, files, MAX_FILES);
-    if (count <= 0) {
+static int waehle_datenbank(Datenbank *datenbank) {
+    char dateien[MAX_DATEIEN][DB_MAX_DATEINAME];
+    int anzahl = liste_csv_dateien(DATEN_VERZEICHNIS, dateien, MAX_DATEIEN);
+    if (anzahl <= 0) {
         printf("Keine Datenbank gefunden.\n");
         printf("\nWeiter mit Enter ...");
         getchar();
         return -1;
     }
     printf("Verfügbare Datenbanken:\n");
-    for (int i = 0; i < count; i++) {
-        printf("[%d] %s\n", i + 1, basename_of(files[i]));
+    for (int i = 0; i < anzahl; i++) {
+        printf("[%d] %s\n", i + 1, basisname_von(dateien[i]));
     }
     printf("Auswahl: ");
-    int choice;
-    if (scanf("%d", &choice) != 1 || choice < 1 || choice > count) {
+    int auswahl;
+    if (scanf("%d", &auswahl) != 1 || auswahl < 1 || auswahl > anzahl) {
         printf("Ungültige Auswahl.\n");
-        flush_input();
+        leere_eingabe();
         printf("\nWeiter mit Enter ...");
         getchar();
         return -1;
     }
-    flush_input();
-    if (load_database(files[choice - 1], db) != 0) {
+    leere_eingabe();
+    if (lade_datenbank(dateien[auswahl - 1], datenbank) != 0) {
         printf("Datei konnte nicht geladen werden.\n");
         printf("\nWeiter mit Enter ...");
         getchar();
@@ -125,66 +125,66 @@ static int select_database(Database *db) {
     return 0;
 }
 
-static DatabaseEntry *find_entry(Database *db, int id) {
-    if (!db) return NULL;
-    for (int i = 0; i < db->count; i++) {
-        if (db->entries[i].id == id) return &db->entries[i];
+static DatenbankEintrag *finde_eintrag(Datenbank *datenbank, int kennung) {
+    if (!datenbank) return NULL;
+    for (int i = 0; i < datenbank->anzahl; i++) {
+        if (datenbank->eintraege[i].id == kennung) return &datenbank->eintraege[i];
     }
     return NULL;
 }
 
-static void add_item(Database *db, char items[MAX_ITEMS][MAX_LEN], int *count) {
-    if (*count >= MAX_ITEMS) {
-        printf("Die Liste ist voll! (max. %d Einträge)\n", MAX_ITEMS);
+static void fuege_artikel_hinzu(Datenbank *datenbank, char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], int *anzahl) {
+    if (*anzahl >= MAX_LISTENEINTRAEGE) {
+        printf("Die Liste ist voll! (max. %d Einträge)\n", MAX_LISTENEINTRAEGE);
         printf("\nWeiter mit Enter ...");
         getchar(); getchar();
         return;
     }
-    if (!db || db->count == 0) {
+    if (!datenbank || datenbank->anzahl == 0) {
         printf("Keine Datenbank geladen.\n");
         printf("\nWeiter mit Enter ...");
         getchar(); getchar();
         return;
     }
-    print_database(db);
+    zeige_datenbank(datenbank);
     printf("ID des Artikels: ");
-    int id;
-    if (scanf("%d", &id) != 1) {
+    int kennung;
+    if (scanf("%d", &kennung) != 1) {
         printf("Ungültige Eingabe!\n");
-        flush_input();
+        leere_eingabe();
         printf("\nWeiter mit Enter ...");
         getchar(); getchar();
         return;
     }
-    flush_input();
-    DatabaseEntry *entry = find_entry(db, id);
-    if (!entry) {
+    leere_eingabe();
+    DatenbankEintrag *eintrag = finde_eintrag(datenbank, kennung);
+    if (!eintrag) {
         printf("ID nicht gefunden.\n");
         printf("\nWeiter mit Enter ...");
         getchar(); getchar();
         return;
     }
-    snprintf(items[*count], MAX_LEN, "%s|%s", entry->artikel, entry->anbieter);
-    (*count)++;
+    snprintf(eintraege[*anzahl], MAX_ZEICHEN, "%s|%s", eintrag->artikel, eintrag->anbieter);
+    (*anzahl)++;
     printf("\nArtikel hinzugefügt!\n");
     printf("\nWeiter mit Enter ...");
     getchar();
 }
 
 // --- Artikel löschen ---
-static void remove_item(char items[MAX_ITEMS][MAX_LEN], int *count) {
-    if (*count == 0) {
+static void entferne_artikel(char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], int *anzahl) {
+    if (*anzahl == 0) {
         printf("Die Liste ist leer, nichts zu löschen.\n");
         printf("\nWeiter mit Enter ...");
         getchar(); getchar();
         return;
     }
 
-    print_list(items, *count);
+    zeige_liste(eintraege, *anzahl);
 
     printf("Nummer des zu löschenden Artikels: ");
-    int num;
-    if (scanf("%d", &num) != 1 || num < 1 || num > *count) {
+    int nummer;
+    if (scanf("%d", &nummer) != 1 || nummer < 1 || nummer > *anzahl) {
         printf("Ungültige Auswahl!\n");
         while (getchar() != '\n');
         printf("\nWeiter mit Enter ...");
@@ -192,10 +192,10 @@ static void remove_item(char items[MAX_ITEMS][MAX_LEN], int *count) {
         return;
     }
 
-    for (int i = num - 1; i < *count - 1; i++) {
-        strcpy(items[i], items[i + 1]);
+    for (int i = nummer - 1; i < *anzahl - 1; i++) {
+        strcpy(eintraege[i], eintraege[i + 1]);
     }
-    (*count)--;
+    (*anzahl)--;
 
     printf("\nArtikel gelöscht!\n");
     printf("\nWeiter mit Enter ...");
@@ -203,14 +203,14 @@ static void remove_item(char items[MAX_ITEMS][MAX_LEN], int *count) {
 }
 
 // --- Hauptmenü: Liste bearbeiten ---
-void edit_list(const char *filename) {
-    char items[MAX_ITEMS][MAX_LEN];
-    int count = load_list(filename, items);
-    Database db;
-    if (select_database(&db) != 0) {
+void bearbeite_liste(const char *dateiname) {
+    char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN];
+    int anzahl = lade_liste(dateiname, eintraege);
+    Datenbank datenbank;
+    if (waehle_datenbank(&datenbank) != 0) {
         return;
     }
-    int choice = 0;
+    int auswahl = 0;
 
     while (1) {
         //clear_screen();
@@ -222,7 +222,7 @@ void edit_list(const char *filename) {
         printf("===============================================\n");
         printf("Auswahl: ");
 
-        if (scanf("%d", &choice) != 1) {
+        if (scanf("%d", &auswahl) != 1) {
             printf("Ungültige Eingabe!\n");
             while (getchar() != '\n');
             continue;
@@ -230,23 +230,23 @@ void edit_list(const char *filename) {
 
        // clear_screen();
 
-        switch (choice) {
+        switch (auswahl) {
             case 1:
-                print_list(items, count);
+                zeige_liste(eintraege, anzahl);
                 printf("\nWeiter mit Enter ...");
                 getchar(); getchar();
                 break;
 
             case 2:
-                add_item(&db, items, &count);
+                fuege_artikel_hinzu(&datenbank, eintraege, &anzahl);
                 break;
 
             case 3:
-                remove_item(items, &count);
+                entferne_artikel(eintraege, &anzahl);
                 break;
 
             case 4:
-                save_list(filename, items, count);
+                speichere_liste(dateiname, eintraege, anzahl);
                 printf("Änderungen gespeichert. Zurück zum Hauptmenü...\n");
                 printf("\nWeiter mit Enter ...");
                 getchar(); getchar();

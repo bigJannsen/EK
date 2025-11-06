@@ -1,10 +1,18 @@
 #ifndef EDIT_DATA_H
 #define EDIT_DATA_H
 
-#ifndef DATA_DIRECTORY
-#define DATA_DIRECTORY "data"
+#ifndef DATEN_VERZEICHNIS
+#ifdef DATA_DIRECTORY
+#define DATEN_VERZEICHNIS DATA_DIRECTORY
+#else
+#define DATEN_VERZEICHNIS "data"
+#endif
 #endif
 
-void edit_data_menu(const char *directory);
+#ifndef DATA_DIRECTORY
+#define DATA_DIRECTORY DATEN_VERZEICHNIS
+#endif
+
+void bearbeite_daten_menue(const char *verzeichnis);
 
 #endif

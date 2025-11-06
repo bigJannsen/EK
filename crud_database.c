@@ -7,190 +7,190 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-static void trim(char *s) {
-    if (!s) return;
-    char *start = s;
-    while (*start && isspace((unsigned char)*start)) start++;
-    if (start != s) memmove(s, start, strlen(start) + 1);
-    size_t len = strlen(s);
-    while (len > 0 && isspace((unsigned char)s[len - 1])) {
-        s[len - 1] = '\0';
-        len--;
+static void entferne_leerraum(char *text) {
+    if (!text) return;
+    char *anfang = text;
+    while (*anfang && isspace((unsigned char)*anfang)) anfang++;
+    if (anfang != text) memmove(text, anfang, strlen(anfang) + 1);
+    size_t laenge = strlen(text);
+    while (laenge > 0 && isspace((unsigned char)text[laenge - 1])) {
+        text[laenge - 1] = '\0';
+        laenge--;
     }
 }
 
-static void read_line(char *buf, size_t size) {
-    if (!buf || size == 0) return;
-    if (!fgets(buf, (int)size, stdin)) {
-        buf[0] = '\0';
+static void lese_zeile(char *puffer, size_t groesse) {
+    if (!puffer || groesse == 0) return;
+    if (!fgets(puffer, (int)groesse, stdin)) {
+        puffer[0] = '\0';
         clearerr(stdin);
         return;
     }
-    buf[strcspn(buf, "\r\n")] = '\0';
+    puffer[strcspn(puffer, "\r\n")] = '\0';
 }
 
-int load_database(const char *filepath, Database *db) {
-    if (!filepath || !db) return -1;
-    FILE *file = fopen(filepath, "r");
-    if (!file) return -1;
-    db->count = 0;
-    strncpy(db->filename, filepath, DB_MAX_FILENAME - 1);
-    db->filename[DB_MAX_FILENAME - 1] = '\0';
-    char line[512];
-    while (fgets(line, sizeof line, file)) {
-        line[strcspn(line, "\r\n")] = '\0';
-        if (line[0] == '\0') continue;
-        char *fields[5];
-        int field_count = 0;
-        char *token = strtok(line, ",");
-        while (token && field_count < 5) {
-            fields[field_count++] = token;
-            token = strtok(NULL, ",");
+int lade_datenbank(const char *dateipfad, Datenbank *datenbank) {
+    if (!dateipfad || !datenbank) return -1;
+    FILE *datei = fopen(dateipfad, "r");
+    if (!datei) return -1;
+    datenbank->anzahl = 0;
+    strncpy(datenbank->dateiname, dateipfad, DB_MAX_DATEINAME - 1);
+    datenbank->dateiname[DB_MAX_DATEINAME - 1] = '\0';
+    char zeile[512];
+    while (fgets(zeile, sizeof zeile, datei)) {
+        zeile[strcspn(zeile, "\r\n")] = '\0';
+        if (zeile[0] == '\0') continue;
+        char *felder[5];
+        int feldanzahl = 0;
+        char *teil = strtok(zeile, ",");
+        while (teil && feldanzahl < 5) {
+            felder[feldanzahl++] = teil;
+            teil = strtok(NULL, ",");
         }
-        if (field_count != 5 || db->count >= DB_MAX_ENTRIES) continue;
-        for (int i = 0; i < 5; i++) trim(fields[i]);
-        char *endptr = NULL;
-        long id = strtol(fields[0], &endptr, 10);
-        if (!endptr || *endptr != '\0') continue;
-        endptr = NULL;
-        long preis = strtol(fields[3], &endptr, 10);
-        if (!endptr || *endptr != '\0') continue;
-        DatabaseEntry *entry = &db->entries[db->count++];
-        entry->id = (int)id;
-        strncpy(entry->artikel, fields[1], DB_MAX_TEXT - 1);
-        entry->artikel[DB_MAX_TEXT - 1] = '\0';
-        strncpy(entry->anbieter, fields[2], DB_MAX_TEXT - 1);
-        entry->anbieter[DB_MAX_TEXT - 1] = '\0';
-        entry->preis_ct = (int)preis;
-        strncpy(entry->menge, fields[4], DB_MAX_TEXT - 1);
-        entry->menge[DB_MAX_TEXT - 1] = '\0';
+        if (feldanzahl != 5 || datenbank->anzahl >= DB_MAX_EINTRAEGE) continue;
+        for (int i = 0; i < 5; i++) entferne_leerraum(felder[i]);
+        char *endstelle = NULL;
+        long kennung = strtol(felder[0], &endstelle, 10);
+        if (!endstelle || *endstelle != '\0') continue;
+        endstelle = NULL;
+        long preis = strtol(felder[3], &endstelle, 10);
+        if (!endstelle || *endstelle != '\0') continue;
+        DatenbankEintrag *eintrag = &datenbank->eintraege[datenbank->anzahl++];
+        eintrag->id = (int)kennung;
+        strncpy(eintrag->artikel, felder[1], DB_MAX_TEXTLAENGE - 1);
+        eintrag->artikel[DB_MAX_TEXTLAENGE - 1] = '\0';
+        strncpy(eintrag->anbieter, felder[2], DB_MAX_TEXTLAENGE - 1);
+        eintrag->anbieter[DB_MAX_TEXTLAENGE - 1] = '\0';
+        eintrag->preis_ct = (int)preis;
+        strncpy(eintrag->menge, felder[4], DB_MAX_TEXTLAENGE - 1);
+        eintrag->menge[DB_MAX_TEXTLAENGE - 1] = '\0';
     }
-    fclose(file);
+    fclose(datei);
     return 0;
 }
 
-int save_database(const Database *db) {
-    if (!db) return -1;
-    FILE *file = fopen(db->filename, "w");
-    if (!file) return -1;
-    for (int i = 0; i < db->count; i++) {
-        const DatabaseEntry *entry = &db->entries[i];
-        fprintf(file, "%d,%s,%s,%d,%s\n", entry->id, entry->artikel, entry->anbieter, entry->preis_ct, entry->menge);
+int speichere_datenbank(const Datenbank *datenbank) {
+    if (!datenbank) return -1;
+    FILE *datei = fopen(datenbank->dateiname, "w");
+    if (!datei) return -1;
+    for (int i = 0; i < datenbank->anzahl; i++) {
+        const DatenbankEintrag *eintrag = &datenbank->eintraege[i];
+        fprintf(datei, "%d,%s,%s,%d,%s\n", eintrag->id, eintrag->artikel, eintrag->anbieter, eintrag->preis_ct, eintrag->menge);
     }
-    fclose(file);
+    fclose(datei);
     return 0;
 }
 
-void print_database(const Database *db) {
-    if (!db) return;
+void zeige_datenbank(const Datenbank *datenbank) {
+    if (!datenbank) return;
     printf("=============================================\n");
     printf("ID | Artikel | Anbieter | Preis(ct) | Menge\n");
     printf("=============================================\n");
-    if (db->count == 0) {
+    if (datenbank->anzahl == 0) {
         printf("Keine Einträge vorhanden.\n");
     } else {
-        for (int i = 0; i < db->count; i++) {
-            const DatabaseEntry *entry = &db->entries[i];
-            printf("%d | %s | %s | %d | %s\n", entry->id, entry->artikel, entry->anbieter, entry->preis_ct, entry->menge);
+        for (int i = 0; i < datenbank->anzahl; i++) {
+            const DatenbankEintrag *eintrag = &datenbank->eintraege[i];
+            printf("%d | %s | %s | %d | %s\n", eintrag->id, eintrag->artikel, eintrag->anbieter, eintrag->preis_ct, eintrag->menge);
         }
     }
     printf("=============================================\n");
 }
 
-int edit_database_entry(Database *db, int index) {
-    if (!db || index < 0 || index >= db->count) return -1;
-    DatabaseEntry *entry = &db->entries[index];
-    char buffer[DB_MAX_TEXT];
-    printf("ID (%d): ", entry->id);
-    read_line(buffer, sizeof buffer);
-    if (buffer[0] != '\0') {
-        char *endptr = NULL;
-        long v = strtol(buffer, &endptr, 10);
-        if (endptr && *endptr == '\0') entry->id = (int)v;
+int bearbeite_datenbankeintrag(Datenbank *datenbank, int index) {
+    if (!datenbank || index < 0 || index >= datenbank->anzahl) return -1;
+    DatenbankEintrag *eintrag = &datenbank->eintraege[index];
+    char puffer[DB_MAX_TEXTLAENGE];
+    printf("ID (%d): ", eintrag->id);
+    lese_zeile(puffer, sizeof puffer);
+    if (puffer[0] != '\0') {
+        char *endstelle = NULL;
+        long wert = strtol(puffer, &endstelle, 10);
+        if (endstelle && *endstelle == '\0') eintrag->id = (int)wert;
     }
-    printf("Artikel (%s): ", entry->artikel);
-    read_line(buffer, sizeof buffer);
-    if (buffer[0] != '\0') {
-        strncpy(entry->artikel, buffer, DB_MAX_TEXT - 1);
-        entry->artikel[DB_MAX_TEXT - 1] = '\0';
+    printf("Artikel (%s): ", eintrag->artikel);
+    lese_zeile(puffer, sizeof puffer);
+    if (puffer[0] != '\0') {
+        strncpy(eintrag->artikel, puffer, DB_MAX_TEXTLAENGE - 1);
+        eintrag->artikel[DB_MAX_TEXTLAENGE - 1] = '\0';
     }
-    printf("Anbieter (%s): ", entry->anbieter);
-    read_line(buffer, sizeof buffer);
-    if (buffer[0] != '\0') {
-        strncpy(entry->anbieter, buffer, DB_MAX_TEXT - 1);
-        entry->anbieter[DB_MAX_TEXT - 1] = '\0';
+    printf("Anbieter (%s): ", eintrag->anbieter);
+    lese_zeile(puffer, sizeof puffer);
+    if (puffer[0] != '\0') {
+        strncpy(eintrag->anbieter, puffer, DB_MAX_TEXTLAENGE - 1);
+        eintrag->anbieter[DB_MAX_TEXTLAENGE - 1] = '\0';
     }
-    printf("Preis in ct (%d): ", entry->preis_ct);
-    read_line(buffer, sizeof buffer);
-    if (buffer[0] != '\0') {
-        char *endptr = NULL;
-        long v = strtol(buffer, &endptr, 10);
-        if (endptr && *endptr == '\0') entry->preis_ct = (int)v;
+    printf("Preis in ct (%d): ", eintrag->preis_ct);
+    lese_zeile(puffer, sizeof puffer);
+    if (puffer[0] != '\0') {
+        char *endstelle = NULL;
+        long wert = strtol(puffer, &endstelle, 10);
+        if (endstelle && *endstelle == '\0') eintrag->preis_ct = (int)wert;
     }
-    printf("Menge (%s): ", entry->menge);
-    read_line(buffer, sizeof buffer);
-    if (buffer[0] != '\0') {
-        strncpy(entry->menge, buffer, DB_MAX_TEXT - 1);
-        entry->menge[DB_MAX_TEXT - 1] = '\0';
+    printf("Menge (%s): ", eintrag->menge);
+    lese_zeile(puffer, sizeof puffer);
+    if (puffer[0] != '\0') {
+        strncpy(eintrag->menge, puffer, DB_MAX_TEXTLAENGE - 1);
+        eintrag->menge[DB_MAX_TEXTLAENGE - 1] = '\0';
     }
     return 0;
 }
 
-static int read_choice(const char *prompt) {
-    char buffer[32];
+static int lese_auswahl(const char *hinweis) {
+    char puffer[32];
     for (;;) {
-        printf("%s", prompt);
-        read_line(buffer, sizeof buffer);
-        if (buffer[0] == '\0') continue;
-        char *endptr = NULL;
-        long v = strtol(buffer, &endptr, 10);
-        if (endptr && *endptr == '\0') return (int)v;
+        printf("%s", hinweis);
+        lese_zeile(puffer, sizeof puffer);
+        if (puffer[0] == '\0') continue;
+        char *endstelle = NULL;
+        long wert = strtol(puffer, &endstelle, 10);
+        if (endstelle && *endstelle == '\0') return (int)wert;
     }
 }
 
-void edit_database(Database *db) {
-    if (!db) return;
-    int dirty = 0;
+void bearbeite_datenbank(Datenbank *datenbank) {
+    if (!datenbank) return;
+    int geaendert = 0;
     for (;;) {
-        printf("\n=== Datenbank: %s ===\n", db->filename);
+        printf("\n=== Datenbank: %s ===\n", datenbank->dateiname);
         printf("[1] Einträge anzeigen\n");
         printf("[2] Eintrag bearbeiten\n");
         printf("[3] Änderungen speichern\n");
         printf("[4] Zurück\n");
-        int choice = read_choice("Auswahl: ");
-        switch (choice) {
+        int auswahl = lese_auswahl("Auswahl: ");
+        switch (auswahl) {
             case 1:
-                print_database(db);
+                zeige_datenbank(datenbank);
                 break;
             case 2:
-                if (db->count == 0) {
+                if (datenbank->anzahl == 0) {
                     printf("Keine Einträge vorhanden.\n");
                     break;
                 }
-                print_database(db);
+                zeige_datenbank(datenbank);
                 {
-                    int index = read_choice("Eintragsnummer (1-basig): ");
-                    if (index < 1 || index > db->count) {
+                    int position = lese_auswahl("Eintragsnummer (1-basig): ");
+                    if (position < 1 || position > datenbank->anzahl) {
                         printf("Ungültige Auswahl.\n");
                         break;
                     }
-                    if (edit_database_entry(db, index - 1) == 0) dirty = 1;
+                    if (bearbeite_datenbankeintrag(datenbank, position - 1) == 0) geaendert = 1;
                 }
                 break;
             case 3:
-                if (save_database(db) == 0) {
-                    dirty = 0;
+                if (speichere_datenbank(datenbank) == 0) {
+                    geaendert = 0;
                     printf("Gespeichert.\n");
                 } else {
                     printf("Speichern fehlgeschlagen.\n");
                 }
                 break;
             case 4:
-                if (dirty) {
+                if (geaendert) {
                     printf("Es gibt ungespeicherte Änderungen. Trotzdem verlassen? (j/n): ");
-                    char answer[8];
-                    read_line(answer, sizeof answer);
-                    if (answer[0] == 'j' || answer[0] == 'J') return;
+                    char antwort[8];
+                    lese_zeile(antwort, sizeof antwort);
+                    if (antwort[0] == 'j' || antwort[0] == 'J') return;
                 } else {
                     return;
                 }
@@ -202,32 +202,32 @@ void edit_database(Database *db) {
     }
 }
 
-static int has_csv_extension(const char *name) {
-    size_t len = strlen(name);
-    if (len < 4) return 0;
-    return (tolower((unsigned char)name[len - 4]) == '.' &&
-            tolower((unsigned char)name[len - 3]) == 'c' &&
-            tolower((unsigned char)name[len - 2]) == 's' &&
-            tolower((unsigned char)name[len - 1]) == 'v');
+static int hat_csv_endung(const char *name) {
+    size_t laenge = strlen(name);
+    if (laenge < 4) return 0;
+    return (tolower((unsigned char)name[laenge - 4]) == '.' &&
+            tolower((unsigned char)name[laenge - 3]) == 'c' &&
+            tolower((unsigned char)name[laenge - 2]) == 's' &&
+            tolower((unsigned char)name[laenge - 1]) == 'v');
 }
 
-int list_csv_files(const char *directory, char files[][DB_MAX_FILENAME], int max_files) {
-    if (!directory || !files || max_files <= 0) return -1;
-    DIR *dir = opendir(directory);
-    if (!dir) return -1;
-    struct dirent *entry;
-    int count = 0;
-    while ((entry = readdir(dir)) != NULL && count < max_files) {
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
-        if (!has_csv_extension(entry->d_name)) continue;
-        char path[DB_MAX_FILENAME];
-        snprintf(path, sizeof path, "%s/%s", directory, entry->d_name);
-        struct stat st;
-        if (stat(path, &st) == -1 || !S_ISREG(st.st_mode)) continue;
-        strncpy(files[count], path, DB_MAX_FILENAME - 1);
-        files[count][DB_MAX_FILENAME - 1] = '\0';
-        count++;
+int liste_csv_dateien(const char *verzeichnis, char dateien[][DB_MAX_DATEINAME], int max_dateien) {
+    if (!verzeichnis || !dateien || max_dateien <= 0) return -1;
+    DIR *verzeichnis_stream = opendir(verzeichnis);
+    if (!verzeichnis_stream) return -1;
+    struct dirent *eintrag;
+    int anzahl = 0;
+    while ((eintrag = readdir(verzeichnis_stream)) != NULL && anzahl < max_dateien) {
+        if (strcmp(eintrag->d_name, ".") == 0 || strcmp(eintrag->d_name, "..") == 0) continue;
+        if (!hat_csv_endung(eintrag->d_name)) continue;
+        char pfad[DB_MAX_DATEINAME];
+        snprintf(pfad, sizeof pfad, "%s/%s", verzeichnis, eintrag->d_name);
+        struct stat status;
+        if (stat(pfad, &status) == -1 || !S_ISREG(status.st_mode)) continue;
+        strncpy(dateien[anzahl], pfad, DB_MAX_DATEINAME - 1);
+        dateien[anzahl][DB_MAX_DATEINAME - 1] = '\0';
+        anzahl++;
     }
-    closedir(dir);
-    return count;
+    closedir(verzeichnis_stream);
+    return anzahl;
 }

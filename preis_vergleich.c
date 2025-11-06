@@ -1,407 +1,408 @@
 #include "preis_vergleich.h"
 
 #include "crud_database.h"
+#include "edit_data.h"
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_FILES 128
-#define LIST_MAX_ITEMS 100
-#define LIST_MAX_LEN 256
-#define SHOPPING_LIST_FILE "einkaufsliste.txt"
+#define MAX_DATEIEN 128
+#define LISTE_MAX_EINTRAEGE 100
+#define LISTE_MAX_ZEICHEN 256
+#define EINKAUFSLISTE_DATEI "einkaufsliste.txt"
 
 typedef enum {
-    UNIT_UNKNOWN,
-    UNIT_GRAM,
-    UNIT_MILLILITER,
-    UNIT_PIECE
-} UnitType;
+    EINHEIT_UNBEKANNT,
+    EINHEIT_GRAMM,
+    EINHEIT_MILLILITER,
+    EINHEIT_STUECK
+} Einheitstyp;
 
 typedef struct {
-    double amount;
-    UnitType type;
-} Quantity;
+    double menge;
+    Einheitstyp typ;
+} Mengenangabe;
 
-static void read_line(char *buf, size_t size) {
-    if (!buf || size == 0) return;
-    if (!fgets(buf, (int)size, stdin)) {
-        buf[0] = '\0';
+static void lese_zeile(char *puffer, size_t groesse) {
+    if (!puffer || groesse == 0) return;
+    if (!fgets(puffer, (int)groesse, stdin)) {
+        puffer[0] = '\0';
         clearerr(stdin);
         return;
     }
-    buf[strcspn(buf, "\r\n")] = '\0';
+    puffer[strcspn(puffer, "\r\n")] = '\0';
 }
 
-static int read_int(const char *prompt) {
-    char buffer[64];
+static int lese_ganzzahl(const char *hinweis) {
+    char puffer[64];
     for (;;) {
-        printf("%s", prompt);
-        read_line(buffer, sizeof buffer);
-        if (buffer[0] == '\0') continue;
-        char *end = NULL;
-        long value = strtol(buffer, &end, 10);
-        if (end && *end == '\0') return (int)value;
+        printf("%s", hinweis);
+        lese_zeile(puffer, sizeof puffer);
+        if (puffer[0] == '\0') continue;
+        char *ende = NULL;
+        long wert = strtol(puffer, &ende, 10);
+        if (ende && *ende == '\0') return (int)wert;
         printf("Ungültige Eingabe.\n");
     }
 }
 
-static const char *basename_of(const char *path) {
-    const char *slash = strrchr(path, '/');
+static const char *basisname_von(const char *pfad) {
+    const char *schraegstrich = strrchr(pfad, '/');
 #ifdef _WIN32
-    const char *backslash = strrchr(path, '\\');
-    if (!slash || (backslash && backslash > slash)) slash = backslash;
+    const char *rueckwaertsschrägstrich = strrchr(pfad, '\\');
+    if (!schraegstrich || (rueckwaertsschrägstrich && rueckwaertsschrägstrich > schraegstrich)) schraegstrich = rueckwaertsschrägstrich;
 #endif
-    if (!slash) return path;
-    return slash + 1;
+    if (!schraegstrich) return pfad;
+    return schraegstrich + 1;
 }
 
-static const char *unit_label(UnitType type) {
-    switch (type) {
-        case UNIT_GRAM: return "g";
-        case UNIT_MILLILITER: return "ml";
-        case UNIT_PIECE: return "Stück";
+static const char *einheits_bezeichnung(Einheitstyp typ) {
+    switch (typ) {
+        case EINHEIT_GRAMM: return "g";
+        case EINHEIT_MILLILITER: return "ml";
+        case EINHEIT_STUECK: return "Stück";
         default: return "";
     }
 }
 
-static int normalize_unit(const char *unit, UnitType *type, double *factor) {
-    if (!unit || !type || !factor) return -1;
-    if (strcmp(unit, "g") == 0) {
-        *type = UNIT_GRAM;
-        *factor = 1.0;
+static int normalisiere_einheit(const char *einheit, Einheitstyp *typ, double *faktor) {
+    if (!einheit || !typ || !faktor) return -1;
+    if (strcmp(einheit, "g") == 0) {
+        *typ = EINHEIT_GRAMM;
+        *faktor = 1.0;
         return 0;
     }
-    if (strcmp(unit, "kg") == 0) {
-        *type = UNIT_GRAM;
-        *factor = 1000.0;
+    if (strcmp(einheit, "kg") == 0) {
+        *typ = EINHEIT_GRAMM;
+        *faktor = 1000.0;
         return 0;
     }
-    if (strcmp(unit, "ml") == 0) {
-        *type = UNIT_MILLILITER;
-        *factor = 1.0;
+    if (strcmp(einheit, "ml") == 0) {
+        *typ = EINHEIT_MILLILITER;
+        *faktor = 1.0;
         return 0;
     }
-    if (strcmp(unit, "l") == 0) {
-        *type = UNIT_MILLILITER;
-        *factor = 1000.0;
+    if (strcmp(einheit, "l") == 0) {
+        *typ = EINHEIT_MILLILITER;
+        *faktor = 1000.0;
         return 0;
     }
-    if (strcmp(unit, "stk") == 0 || strcmp(unit, "st") == 0 || strcmp(unit, "stück") == 0) {
-        *type = UNIT_PIECE;
-        *factor = 1.0;
+    if (strcmp(einheit, "stk") == 0 || strcmp(einheit, "st") == 0 || strcmp(einheit, "stück") == 0) {
+        *typ = EINHEIT_STUECK;
+        *faktor = 1.0;
         return 0;
     }
     return -1;
 }
 
-static int parse_quantity_text(const char *text, Quantity *quantity) {
-    if (!text || !quantity) return -1;
-    char buffer[DB_MAX_TEXT];
-    strncpy(buffer, text, sizeof buffer - 1);
-    buffer[sizeof buffer - 1] = '\0';
-    char *p = buffer;
-    while (*p && isspace((unsigned char)*p)) p++;
-    for (char *c = p; *c; ++c) {
-        if (*c == ',') *c = '.';
+static int interpretiere_mengentext(const char *text, Mengenangabe *mengenangabe) {
+    if (!text || !mengenangabe) return -1;
+    char puffer[DB_MAX_TEXTLAENGE];
+    strncpy(puffer, text, sizeof puffer - 1);
+    puffer[sizeof puffer - 1] = '\0';
+    char *position = puffer;
+    while (*position && isspace((unsigned char)*position)) position++;
+    for (char *zeichen = position; *zeichen; ++zeichen) {
+        if (*zeichen == ',') *zeichen = '.';
     }
-    char *end = NULL;
-    double value = strtod(p, &end);
-    if (end == p) return -1;
-    while (*end && isspace((unsigned char)*end)) end++;
-    if (*end == '\0') return -1;
-    char unit_buf[16];
-    size_t idx = 0;
-    while (*end && idx + 1 < sizeof unit_buf) {
-        unit_buf[idx++] = (char)tolower((unsigned char)*end);
-        end++;
+    char *ende = NULL;
+    double wert = strtod(position, &ende);
+    if (ende == position) return -1;
+    while (*ende && isspace((unsigned char)*ende)) ende++;
+    if (*ende == '\0') return -1;
+    char einheit_puffer[16];
+    size_t index = 0;
+    while (*ende && index + 1 < sizeof einheit_puffer) {
+        einheit_puffer[index++] = (char)tolower((unsigned char)*ende);
+        ende++;
     }
-    unit_buf[idx] = '\0';
-    UnitType type = UNIT_UNKNOWN;
-    double factor = 0.0;
-    if (normalize_unit(unit_buf, &type, &factor) != 0) return -1;
-    quantity->amount = value * factor;
-    quantity->type = type;
+    einheit_puffer[index] = '\0';
+    Einheitstyp typ = EINHEIT_UNBEKANNT;
+    double faktor = 0.0;
+    if (normalisiere_einheit(einheit_puffer, &typ, &faktor) != 0) return -1;
+    mengenangabe->menge = wert * faktor;
+    mengenangabe->typ = typ;
     return 0;
 }
 
-static int select_database_path(const char *directory, char *out_path, size_t out_size) {
-    char files[MAX_FILES][DB_MAX_FILENAME];
-    int count = list_csv_files(directory, files, MAX_FILES);
-    if (count <= 0) {
+static int waehle_datenbank_pfad(const char *verzeichnis, char *ausgabepfad, size_t ausgabe_groesse) {
+    char dateien[MAX_DATEIEN][DB_MAX_DATEINAME];
+    int anzahl = liste_csv_dateien(verzeichnis, dateien, MAX_DATEIEN);
+    if (anzahl <= 0) {
         printf("Keine Datenbanken gefunden.\n");
         return -1;
     }
     printf("Verfügbare Datenbanken:\n");
-    for (int i = 0; i < count; i++) {
-        printf("[%d] %s\n", i + 1, basename_of(files[i]));
+    for (int i = 0; i < anzahl; i++) {
+        printf("[%d] %s\n", i + 1, basisname_von(dateien[i]));
     }
     for (;;) {
-        int choice = read_int("Auswahl: ");
-        if (choice >= 1 && choice <= count) {
-            strncpy(out_path, files[choice - 1], out_size - 1);
-            out_path[out_size - 1] = '\0';
+        int auswahl = lese_ganzzahl("Auswahl: ");
+        if (auswahl >= 1 && auswahl <= anzahl) {
+            strncpy(ausgabepfad, dateien[auswahl - 1], ausgabe_groesse - 1);
+            ausgabepfad[ausgabe_groesse - 1] = '\0';
             return 0;
         }
         printf("Ungültige Auswahl.\n");
     }
 }
 
-static DatabaseEntry *find_entry_by_id(Database *db, int id) {
-    if (!db) return NULL;
-    for (int i = 0; i < db->count; i++) {
-        if (db->entries[i].id == id) return &db->entries[i];
+static DatenbankEintrag *finde_eintrag_nach_id(Datenbank *datenbank, int kennung) {
+    if (!datenbank) return NULL;
+    for (int i = 0; i < datenbank->anzahl; i++) {
+        if (datenbank->eintraege[i].id == kennung) return &datenbank->eintraege[i];
     }
     return NULL;
 }
 
-static DatabaseEntry *select_entry(Database *db, const char *prompt, int exclude_id) {
+static DatenbankEintrag *waehle_eintrag(Datenbank *datenbank, const char *hinweis, int ausgeschlossene_id) {
     for (;;) {
-        int id = read_int(prompt);
-        if (exclude_id != -1 && id == exclude_id) {
+        int kennung = lese_ganzzahl(hinweis);
+        if (ausgeschlossene_id != -1 && kennung == ausgeschlossene_id) {
             printf("Dieser Eintrag wurde bereits gewählt.\n");
             continue;
         }
-        DatabaseEntry *entry = find_entry_by_id(db, id);
-        if (entry) return entry;
+        DatenbankEintrag *eintrag = finde_eintrag_nach_id(datenbank, kennung);
+        if (eintrag) return eintrag;
         printf("ID nicht gefunden.\n");
     }
 }
 
-static double read_amount(UnitType type) {
-    char buffer[64];
-    const char *unit = unit_label(type);
+static double lese_menge(Einheitstyp typ) {
+    char puffer[64];
+    const char *einheit = einheits_bezeichnung(typ);
     for (;;) {
-        printf("Gewünschte Menge in %s: ", unit);
-        read_line(buffer, sizeof buffer);
-        if (buffer[0] == '\0') continue;
-        for (char *c = buffer; *c; ++c) {
-            if (*c == ',') *c = '.';
+        printf("Gewünschte Menge in %s: ", einheit);
+        lese_zeile(puffer, sizeof puffer);
+        if (puffer[0] == '\0') continue;
+        for (char *zeichen = puffer; *zeichen; ++zeichen) {
+            if (*zeichen == ',') *zeichen = '.';
         }
-        char *end = NULL;
-        double value = strtod(buffer, &end);
-        if (end && *end == '\0' && value > 0.0) {
-            return value;
+        char *ende = NULL;
+        double wert = strtod(puffer, &ende);
+        if (ende && *ende == '\0' && wert > 0.0) {
+            return wert;
         }
         printf("Ungültige Eingabe.\n");
     }
 }
 
-static void trim_spaces(char *s) {
-    if (!s) return;
-    char *start = s;
-    while (*start && isspace((unsigned char)*start)) start++;
-    if (start != s) memmove(s, start, strlen(start) + 1);
-    size_t len = strlen(s);
-    while (len > 0 && isspace((unsigned char)s[len - 1])) {
-        s[len - 1] = '\0';
-        len--;
+static void entferne_leerraum(char *text) {
+    if (!text) return;
+    char *anfang = text;
+    while (*anfang && isspace((unsigned char)*anfang)) anfang++;
+    if (anfang != text) memmove(text, anfang, strlen(anfang) + 1);
+    size_t laenge = strlen(text);
+    while (laenge > 0 && isspace((unsigned char)text[laenge - 1])) {
+        text[laenge - 1] = '\0';
+        laenge--;
     }
 }
 
-static void split_list_entry(const char *line, char *article, size_t article_size, char *provider, size_t provider_size) {
-    if (!line) {
-        if (article && article_size > 0) article[0] = '\0';
-        if (provider && provider_size > 0) provider[0] = '\0';
+static void teile_listeneintrag(const char *zeile, char *artikel, size_t artikel_groesse, char *anbieter, size_t anbieter_groesse) {
+    if (!zeile) {
+        if (artikel && artikel_groesse > 0) artikel[0] = '\0';
+        if (anbieter && anbieter_groesse > 0) anbieter[0] = '\0';
         return;
     }
-    const char *sep = strchr(line, '|');
-    if (sep) {
-        size_t len = (size_t)(sep - line);
-        if (article && article_size > 0) {
-            if (len >= article_size) len = article_size - 1;
-            strncpy(article, line, len);
-            article[len] = '\0';
+    const char *trenner = strchr(zeile, '|');
+    if (trenner) {
+        size_t laenge = (size_t)(trenner - zeile);
+        if (artikel && artikel_groesse > 0) {
+            if (laenge >= artikel_groesse) laenge = artikel_groesse - 1;
+            strncpy(artikel, zeile, laenge);
+            artikel[laenge] = '\0';
         }
-        if (provider && provider_size > 0) {
-            strncpy(provider, sep + 1, provider_size - 1);
-            provider[provider_size - 1] = '\0';
+        if (anbieter && anbieter_groesse > 0) {
+            strncpy(anbieter, trenner + 1, anbieter_groesse - 1);
+            anbieter[anbieter_groesse - 1] = '\0';
         }
     } else {
-        if (article && article_size > 0) {
-            strncpy(article, line, article_size - 1);
-            article[article_size - 1] = '\0';
+        if (artikel && artikel_groesse > 0) {
+            strncpy(artikel, zeile, artikel_groesse - 1);
+            artikel[artikel_groesse - 1] = '\0';
         }
-        if (provider && provider_size > 0) provider[0] = '\0';
+        if (anbieter && anbieter_groesse > 0) anbieter[0] = '\0';
     }
-    if (article) trim_spaces(article);
-    if (provider) trim_spaces(provider);
+    if (artikel) entferne_leerraum(artikel);
+    if (anbieter) entferne_leerraum(anbieter);
 }
 
-static int load_shopping_list(const char *filename, char items[LIST_MAX_ITEMS][LIST_MAX_LEN]) {
-    FILE *file = fopen(filename, "r");
-    if (!file) return 0;
-    int count = 0;
-    while (count < LIST_MAX_ITEMS && fgets(items[count], LIST_MAX_LEN, file)) {
-        items[count][strcspn(items[count], "\r\n")] = '\0';
-        count++;
+static int lade_einkaufsliste(const char *dateiname, char eintraege[LISTE_MAX_EINTRAEGE][LISTE_MAX_ZEICHEN]) {
+    FILE *datei = fopen(dateiname, "r");
+    if (!datei) return 0;
+    int anzahl = 0;
+    while (anzahl < LISTE_MAX_EINTRAEGE && fgets(eintraege[anzahl], LISTE_MAX_ZEICHEN, datei)) {
+        eintraege[anzahl][strcspn(eintraege[anzahl], "\r\n")] = '\0';
+        anzahl++;
     }
-    fclose(file);
-    return count;
+    fclose(datei);
+    return anzahl;
 }
 
-static void save_shopping_list(const char *filename, char items[LIST_MAX_ITEMS][LIST_MAX_LEN], int count) {
-    FILE *file = fopen(filename, "w");
-    if (!file) {
+static void speichere_einkaufsliste(const char *dateiname, char eintraege[LISTE_MAX_EINTRAEGE][LISTE_MAX_ZEICHEN], int anzahl) {
+    FILE *datei = fopen(dateiname, "w");
+    if (!datei) {
         printf("Einkaufsliste konnte nicht gespeichert werden.\n");
         return;
     }
-    for (int i = 0; i < count; i++) {
-        fprintf(file, "%s\n", items[i]);
+    for (int i = 0; i < anzahl; i++) {
+        fprintf(datei, "%s\n", eintraege[i]);
     }
-    fclose(file);
+    fclose(datei);
 }
 
-static void compare_single(Database *db) {
-    if (!db) return;
-    if (db->count < 2) {
+static void vergleiche_einzeln(Datenbank *datenbank) {
+    if (!datenbank) return;
+    if (datenbank->anzahl < 2) {
         printf("Zu wenige Einträge für einen Vergleich.\n");
         return;
     }
-    print_database(db);
-    DatabaseEntry *first = select_entry(db, "ID des ersten Eintrags: ", -1);
-    DatabaseEntry *second = select_entry(db, "ID des zweiten Eintrags: ", first->id);
-    Quantity qty_first;
-    Quantity qty_second;
-    if (parse_quantity_text(first->menge, &qty_first) != 0 ||
-        parse_quantity_text(second->menge, &qty_second) != 0) {
+    zeige_datenbank(datenbank);
+    DatenbankEintrag *erster = waehle_eintrag(datenbank, "ID des ersten Eintrags: ", -1);
+    DatenbankEintrag *zweiter = waehle_eintrag(datenbank, "ID des zweiten Eintrags: ", erster->id);
+    Mengenangabe menge_erster;
+    Mengenangabe menge_zweiter;
+    if (interpretiere_mengentext(erster->menge, &menge_erster) != 0 ||
+        interpretiere_mengentext(zweiter->menge, &menge_zweiter) != 0) {
         printf("Mengenangaben konnten nicht interpretiert werden.\n");
         return;
     }
-    if (qty_first.type != qty_second.type) {
+    if (menge_erster.typ != menge_zweiter.typ) {
         printf("Die Einheiten der ausgewählten Produkte stimmen nicht überein.\n");
         return;
     }
-    double desired_amount = read_amount(qty_first.type);
-    double unit_price_first = (double)first->preis_ct / qty_first.amount;
-    double unit_price_second = (double)second->preis_ct / qty_second.amount;
-    double total_first = unit_price_first * desired_amount;
-    double total_second = unit_price_second * desired_amount;
-    const char *unit = unit_label(qty_first.type);
-    printf("\nVergleich der Produkte für %.2f %s:\n", desired_amount, unit);
-    printf("1) %s (%s)\n", first->artikel, first->anbieter);
-    printf("   Menge pro Packung: %s\n", first->menge);
-    printf("   Preis pro Packung: %d ct (%.2f €)\n", first->preis_ct, first->preis_ct / 100.0);
-    printf("   Preis pro %s: %.4f ct\n", unit, unit_price_first);
-    printf("   Preis für %.2f %s: %.2f € (%.2f ct)\n\n", desired_amount, unit, total_first / 100.0, total_first);
-    printf("2) %s (%s)\n", second->artikel, second->anbieter);
-    printf("   Menge pro Packung: %s\n", second->menge);
-    printf("   Preis pro Packung: %d ct (%.2f €)\n", second->preis_ct, second->preis_ct / 100.0);
-    printf("   Preis pro %s: %.4f ct\n", unit, unit_price_second);
-    printf("   Preis für %.2f %s: %.2f € (%.2f ct)\n", desired_amount, unit, total_second / 100.0, total_second);
+    double gewuenschte_menge = lese_menge(menge_erster.typ);
+    double preis_pro_einheit_erster = (double)erster->preis_ct / menge_erster.menge;
+    double preis_pro_einheit_zweiter = (double)zweiter->preis_ct / menge_zweiter.menge;
+    double gesamt_erster = preis_pro_einheit_erster * gewuenschte_menge;
+    double gesamt_zweiter = preis_pro_einheit_zweiter * gewuenschte_menge;
+    const char *einheit = einheits_bezeichnung(menge_erster.typ);
+    printf("\nVergleich der Produkte für %.2f %s:\n", gewuenschte_menge, einheit);
+    printf("1) %s (%s)\n", erster->artikel, erster->anbieter);
+    printf("   Menge pro Packung: %s\n", erster->menge);
+    printf("   Preis pro Packung: %d ct (%.2f €)\n", erster->preis_ct, erster->preis_ct / 100.0);
+    printf("   Preis pro %s: %.4f ct\n", einheit, preis_pro_einheit_erster);
+    printf("   Preis für %.2f %s: %.2f € (%.2f ct)\n\n", gewuenschte_menge, einheit, gesamt_erster / 100.0, gesamt_erster);
+    printf("2) %s (%s)\n", zweiter->artikel, zweiter->anbieter);
+    printf("   Menge pro Packung: %s\n", zweiter->menge);
+    printf("   Preis pro Packung: %d ct (%.2f €)\n", zweiter->preis_ct, zweiter->preis_ct / 100.0);
+    printf("   Preis pro %s: %.4f ct\n", einheit, preis_pro_einheit_zweiter);
+    printf("   Preis für %.2f %s: %.2f € (%.2f ct)\n", gewuenschte_menge, einheit, gesamt_zweiter / 100.0, gesamt_zweiter);
     const double epsilon = 1e-6;
-    if (unit_price_first + epsilon < unit_price_second) {
-        printf("\nGünstiger pro %s ist: %s (%s)\n", unit, first->artikel, first->anbieter);
-    } else if (unit_price_second + epsilon < unit_price_first) {
-        printf("\nGünstiger pro %s ist: %s (%s)\n", unit, second->artikel, second->anbieter);
+    if (preis_pro_einheit_erster + epsilon < preis_pro_einheit_zweiter) {
+        printf("\nGünstiger pro %s ist: %s (%s)\n", einheit, erster->artikel, erster->anbieter);
+    } else if (preis_pro_einheit_zweiter + epsilon < preis_pro_einheit_erster) {
+        printf("\nGünstiger pro %s ist: %s (%s)\n", einheit, zweiter->artikel, zweiter->anbieter);
     } else {
-        printf("\nBeide Produkte sind pro %s gleich teuer.\n", unit);
+        printf("\nBeide Produkte sind pro %s gleich teuer.\n", einheit);
     }
 }
 
-static void compare_shopping_list(Database *db, const char *list_file) {
-    if (!db || !list_file) return;
-    char items[LIST_MAX_ITEMS][LIST_MAX_LEN];
-    int count = load_shopping_list(list_file, items);
-    if (count == 0) {
+static void vergleiche_einkaufsliste(Datenbank *datenbank, const char *listen_datei) {
+    if (!datenbank || !listen_datei) return;
+    char eintraege[LISTE_MAX_EINTRAEGE][LISTE_MAX_ZEICHEN];
+    int anzahl = lade_einkaufsliste(listen_datei, eintraege);
+    if (anzahl == 0) {
         printf("Die Einkaufsliste ist leer.\n");
         return;
     }
-    int best_indices[LIST_MAX_ITEMS];
-    for (int i = 0; i < count; i++) best_indices[i] = -1;
+    int beste_indizes[LISTE_MAX_EINTRAEGE];
+    for (int i = 0; i < anzahl; i++) beste_indizes[i] = -1;
     printf("\nPreisvergleich für die Einkaufsliste:\n");
-    for (int i = 0; i < count; i++) {
-        char article[DB_MAX_TEXT];
-        char provider[DB_MAX_TEXT];
-        split_list_entry(items[i], article, sizeof article, provider, sizeof provider);
-        if (article[0] == '\0') {
+    for (int i = 0; i < anzahl; i++) {
+        char artikel[DB_MAX_TEXTLAENGE];
+        char anbieter[DB_MAX_TEXTLAENGE];
+        teile_listeneintrag(eintraege[i], artikel, sizeof artikel, anbieter, sizeof anbieter);
+        if (artikel[0] == '\0') {
             printf("- Position %d konnte nicht gelesen werden.\n", i + 1);
             continue;
         }
-        printf("\n%s:\n", article);
-        int matches = 0;
-        int best_idx = -1;
-        int best_has_qty = 0;
-        double best_unit_price = 0.0;
-        int best_pack_price = 0;
-        for (int j = 0; j < db->count; j++) {
-            DatabaseEntry *entry = &db->entries[j];
-            if (strcmp(entry->artikel, article) != 0) continue;
-            matches++;
-            Quantity qty;
-            int has_qty = 0;
-            double unit_price = 0.0;
-            if (parse_quantity_text(entry->menge, &qty) == 0 && qty.amount > 0.0) {
-                has_qty = 1;
-                unit_price = (double)entry->preis_ct / qty.amount;
+        printf("\n%s:\n", artikel);
+        int treffer = 0;
+        int bester_index = -1;
+        int bester_hat_menge = 0;
+        double bester_einheitspreis = 0.0;
+        int bester_packungspreis = 0;
+        for (int j = 0; j < datenbank->anzahl; j++) {
+            DatenbankEintrag *eintrag = &datenbank->eintraege[j];
+            if (strcmp(eintrag->artikel, artikel) != 0) continue;
+            treffer++;
+            Mengenangabe mengenangabe;
+            int hat_menge = 0;
+            double einheitspreis = 0.0;
+            if (interpretiere_mengentext(eintrag->menge, &mengenangabe) == 0 && mengenangabe.menge > 0.0) {
+                hat_menge = 1;
+                einheitspreis = (double)eintrag->preis_ct / mengenangabe.menge;
             }
-            printf("  - %s: %d ct (%.2f €) pro Packung, %s", entry->anbieter, entry->preis_ct, entry->preis_ct / 100.0, entry->menge);
-            if (has_qty) {
-                printf(", %.4f ct pro %s", unit_price, unit_label(qty.type));
+            printf("  - %s: %d ct (%.2f €) pro Packung, %s", eintrag->anbieter, eintrag->preis_ct, eintrag->preis_ct / 100.0, eintrag->menge);
+            if (hat_menge) {
+                printf(", %.4f ct pro %s", einheitspreis, einheits_bezeichnung(mengenangabe.typ));
             }
-            if (provider[0] != '\0' && strcmp(provider, entry->anbieter) == 0) {
+            if (anbieter[0] != '\0' && strcmp(anbieter, eintrag->anbieter) == 0) {
                 printf(" [aktuelle Auswahl]");
             }
             printf("\n");
-            if (has_qty) {
-                if (!best_has_qty || unit_price + 1e-6 < best_unit_price) {
-                    best_idx = j;
-                    best_has_qty = 1;
-                    best_unit_price = unit_price;
-                    best_pack_price = entry->preis_ct;
+            if (hat_menge) {
+                if (!bester_hat_menge || einheitspreis + 1e-6 < bester_einheitspreis) {
+                    bester_index = j;
+                    bester_hat_menge = 1;
+                    bester_einheitspreis = einheitspreis;
+                    bester_packungspreis = eintrag->preis_ct;
                 }
             } else {
-                if (best_idx == -1 || (!best_has_qty && entry->preis_ct < best_pack_price)) {
-                    best_idx = j;
-                    best_pack_price = entry->preis_ct;
+                if (bester_index == -1 || (!bester_hat_menge && eintrag->preis_ct < bester_packungspreis)) {
+                    bester_index = j;
+                    bester_packungspreis = eintrag->preis_ct;
                 }
             }
         }
-        if (matches == 0) {
+        if (treffer == 0) {
             printf("  Kein Anbieter gefunden.\n");
             continue;
         }
-        if (best_idx >= 0) {
-            DatabaseEntry *best = &db->entries[best_idx];
-            printf("  -> Günstigster Anbieter: %s (%s) mit %d ct pro Packung\n", best->anbieter, best->menge, best->preis_ct);
-            best_indices[i] = best_idx;
+        if (bester_index >= 0) {
+            DatenbankEintrag *bester = &datenbank->eintraege[bester_index];
+            printf("  -> Günstigster Anbieter: %s (%s) mit %d ct pro Packung\n", bester->anbieter, bester->menge, bester->preis_ct);
+            beste_indizes[i] = bester_index;
         }
     }
     printf("\nErgebnisse in die Einkaufsliste übernehmen? (j/n): ");
-    char answer[8];
-    read_line(answer, sizeof answer);
-    if (answer[0] == 'j' || answer[0] == 'J') {
-        for (int i = 0; i < count; i++) {
-            if (best_indices[i] >= 0) {
-                DatabaseEntry *best = &db->entries[best_indices[i]];
-                snprintf(items[i], LIST_MAX_LEN, "%s|%s", best->artikel, best->anbieter);
+    char antwort[8];
+    lese_zeile(antwort, sizeof antwort);
+    if (antwort[0] == 'j' || antwort[0] == 'J') {
+        for (int i = 0; i < anzahl; i++) {
+            if (beste_indizes[i] >= 0) {
+                DatenbankEintrag *bester = &datenbank->eintraege[beste_indizes[i]];
+                snprintf(eintraege[i], LISTE_MAX_ZEICHEN, "%s|%s", bester->artikel, bester->anbieter);
             }
         }
-        save_shopping_list(list_file, items, count);
+        speichere_einkaufsliste(listen_datei, eintraege, anzahl);
         printf("Einkaufsliste aktualisiert.\n");
     }
 }
 
-void compare_prices_menu(const char *directory) {
-    if (!directory || directory[0] == '\0') directory = DATA_DIRECTORY;
+void preisvergleich_menue(const char *verzeichnis) {
+    if (!verzeichnis || verzeichnis[0] == '\0') verzeichnis = DATEN_VERZEICHNIS;
     printf("[1] Einzelvergleich\n");
     printf("[2] Einkaufszettel vergleichen\n");
-    int mode = read_int("Auswahl: ");
-    if (mode != 1 && mode != 2) {
+    int modus = lese_ganzzahl("Auswahl: ");
+    if (modus != 1 && modus != 2) {
         printf("Ungültige Auswahl.\n");
         return;
     }
-    char path[DB_MAX_FILENAME];
-    if (select_database_path(directory, path, sizeof path) != 0) return;
-    Database db;
-    if (load_database(path, &db) != 0) {
+    char pfad[DB_MAX_DATEINAME];
+    if (waehle_datenbank_pfad(verzeichnis, pfad, sizeof pfad) != 0) return;
+    Datenbank datenbank;
+    if (lade_datenbank(pfad, &datenbank) != 0) {
         printf("Datei konnte nicht geladen werden.\n");
         return;
     }
-    if (mode == 1) {
-        compare_single(&db);
+    if (modus == 1) {
+        vergleiche_einzeln(&datenbank);
     } else {
-        compare_shopping_list(&db, SHOPPING_LIST_FILE);
+        vergleiche_einkaufsliste(&datenbank, EINKAUFSLISTE_DATEI);
     }
 }
