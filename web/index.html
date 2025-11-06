@@ -4,12 +4,32 @@
     <meta charset="utf-8">
     <title>Einkaufsmanager</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        header.page-header {
+            position: relative;
+        }
+
+        #datetime {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 0.9rem;
+            color: #444;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+    </style>
 </head>
 <body>
+
 <header class="page-header">
     <h1>Einkaufsmanager</h1>
     <p>Verwalte Artikel, Einkaufslisten und Preisvergleiche bequem im Browser.</p>
+    <div id="datetime"></div>
 </header>
+
 <main class="layout">
     <section class="panel" id="database-panel">
         <h2>Datenbankverwaltung</h2>
@@ -153,9 +173,23 @@
         </div>
     </section>
 </main>
+
 <footer class="page-footer">
     <p>Server läuft lokal auf <span id="server-address">http://localhost:8080</span></p>
 </footer>
+
 <script src="/static/app.js" defer></script>
+<script>
+    function updateDateTime() {
+        const now = new Date();
+        const options = { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' };
+        const date = now.toLocaleDateString('de-DE', options);
+        const time = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('datetime').textContent = `${date} ${time}`;
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+</script>
+
 </body>
 </html>

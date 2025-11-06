@@ -50,7 +50,7 @@ cmake_ninja_workdir = C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/cmak
 build cmake_object_order_depends_target_einkaufsprojekt: phony || CMakeFiles/einkaufsprojekt.dir
 
 build CMakeFiles/einkaufsprojekt.dir/main.c.obj: C_COMPILER__einkaufsprojekt_unscanned_Debug C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/main.c || cmake_object_order_depends_target_einkaufsprojekt
-  DEFINES = -DDATA_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DSHOPPING_LIST_PATH=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DWEB_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\"
+  DEFINES = -DDATA_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DDATEN_VERZEICHNIS=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DEINKAUFSLISTE_PFAD=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DSHOPPING_LIST_PATH=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DWEB_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\" -DWEB_VERZEICHNIS=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\"
   DEP_FILE = CMakeFiles\einkaufsprojekt.dir\main.c.obj.d
   FLAGS = -g -std=gnu11 -fdiagnostics-color=always -Wall -Wextra -pedantic
   INCLUDES = -IC:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/include
@@ -58,7 +58,7 @@ build CMakeFiles/einkaufsprojekt.dir/main.c.obj: C_COMPILER__einkaufsprojekt_uns
   OBJECT_FILE_DIR = CMakeFiles\einkaufsprojekt.dir
 
 build CMakeFiles/einkaufsprojekt.dir/web_server.c.obj: C_COMPILER__einkaufsprojekt_unscanned_Debug C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web_server.c || cmake_object_order_depends_target_einkaufsprojekt
-  DEFINES = -DDATA_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DSHOPPING_LIST_PATH=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DWEB_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\"
+  DEFINES = -DDATA_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DDATEN_VERZEICHNIS=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DEINKAUFSLISTE_PFAD=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DSHOPPING_LIST_PATH=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DWEB_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\" -DWEB_VERZEICHNIS=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\"
   DEP_FILE = CMakeFiles\einkaufsprojekt.dir\web_server.c.obj.d
   FLAGS = -g -std=gnu11 -fdiagnostics-color=always -Wall -Wextra -pedantic
   INCLUDES = -IC:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/include
@@ -66,7 +66,7 @@ build CMakeFiles/einkaufsprojekt.dir/web_server.c.obj: C_COMPILER__einkaufsproje
   OBJECT_FILE_DIR = CMakeFiles\einkaufsprojekt.dir
 
 build CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj: C_COMPILER__einkaufsprojekt_unscanned_Debug C$:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/crud_database.c || cmake_object_order_depends_target_einkaufsprojekt
-  DEFINES = -DDATA_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DSHOPPING_LIST_PATH=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DWEB_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\"
+  DEFINES = -DDATA_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DDATEN_VERZEICHNIS=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/data\" -DEINKAUFSLISTE_PFAD=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DSHOPPING_LIST_PATH=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/einkaufsliste.txt\" -DWEB_DIRECTORY=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\" -DWEB_VERZEICHNIS=\"C:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/web\"
   DEP_FILE = CMakeFiles\einkaufsprojekt.dir\crud_database.c.obj.d
   FLAGS = -g -std=gnu11 -fdiagnostics-color=always -Wall -Wextra -pedantic
   INCLUDES = -IC:/Users/niema/CLionProjects/ITAPROJEKT_V1.0.3-CMAKE/include

@@ -1,15 +1,13 @@
 # ninja log v5
 2	106	7818314932899186	CMakeFiles/einkaufsprojekt.dir/druck_einkauf.c.obj	d990d332df52d2d5
-0	128	7829514226741973	CMakeFiles/einkaufsprojekt.dir/main.c.obj	6a2d54400d0aeb77
+11	135	7841290086773058	CMakeFiles/einkaufsprojekt.dir/main.c.obj	d13160db53e50d89
 2	109	7819979224803308	CMakeFiles/einkaufsprojekt.dir/edit_list.c.obj	31017e04eadc491e
-3053	3388	7829514259280222	bin/einkaufsprojekt.exe	739293b15af9db9e
-15	221	7829514227665257	CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj	84260c4f65d804f7
-2	195	7829522556351417	build.ninja	e8fa521179f2b2c6
+1005	1365	7841297822248352	bin/einkaufsprojekt.exe	739293b15af9db9e
+18	2052	7841290105931221	CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj	1f783d6115034197
+2	195	7841300069202976	build.ninja	e8fa521179f2b2c6
 8	112	7820832894633773	CMakeFiles/einkaufsprojekt.dir/edit_data.c.obj	5d90254219675c5e
-8	3051	7829514255966533	CMakeFiles/einkaufsprojekt.dir/web_server.c.obj	b2f22f61fdb5b4b3
-11	95	7829525329318750	CMakeFiles/einkaufsprojekt.dir/main.c.obj	550e745961a49ad8
-20	666	7829525335014106	CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj	726b25383af1cb88
-3	1042	7829525338754474	CMakeFiles/einkaufsprojekt.dir/web_server.c.obj	d35d2954a8b36113
-1042	1184	7829525340165553	bin/einkaufsprojekt.exe	739293b15af9db9e
-3	1087	7829527421917322	CMakeFiles/einkaufsprojekt.dir/web_server.c.obj	d35d2954a8b36113
-1088	1224	7829527423245104	bin/einkaufsprojekt.exe	739293b15af9db9e
+2	1004	7841297818700923	CMakeFiles/einkaufsprojekt.dir/web_server.c.obj	2b95b60ec3621038
+10	89	7841300199620082	CMakeFiles/einkaufsprojekt.dir/main.c.obj	d13160db53e50d89
+17	626	7841300204983760	CMakeFiles/einkaufsprojekt.dir/crud_database.c.obj	1f783d6115034197
+3	996	7841300208650823	CMakeFiles/einkaufsprojekt.dir/web_server.c.obj	2b95b60ec3621038
+997	1120	7841300209883486	bin/einkaufsprojekt.exe	739293b15af9db9e

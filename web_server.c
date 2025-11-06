@@ -698,9 +698,9 @@ static void handle_db_get(socket_t client, const HttpRequest *req) {
     buffer_append_str(&buf, "{\"name\":");
     append_json_string(&buf, name);
     buffer_append_str(&buf, ",\"entries\":[");
-    for (int i = 0; i < db.count; i++) {
+    for (int i = 0; i < db.anzahl; i++) {
         if (i > 0) buffer_append_char(&buf, ',');
-        DatabaseEntry *entry = &db.entries[i];
+        DatabaseEntry *entry = &db.eintraege[i];
         buffer_append_str(&buf, "{\"id\":");
         buffer_append_format(&buf, "%d", entry->id);
         buffer_append_str(&buf, ",\"artikel\":");
@@ -776,9 +776,9 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
         return;
     }
     DatabaseEntry *entry = NULL;
-    for (int i = 0; i < db.count; i++) {
-        if (db.entries[i].id == id) {
-            entry = &db.entries[i];
+    for (int i = 0; i < db.anzahl; i++) {
+        if (db.eintraege[i].id == id) {
+            entry = &db.eintraege[i];
             break;
         }
     }
@@ -792,11 +792,11 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
             send_error(client, "400 Bad Request", "ID existiert bereits");
             return;
         }
-        if (db.count >= DB_MAX_ENTRIES) {
+        if (db.anzahl >= DB_MAX_ENTRIES) {
             send_error(client, "400 Bad Request", "Keine freien Plätze");
             return;
         }
-        entry = &db.entries[db.count++];
+        entry = &db.eintraege[db.anzahl++];
         entry->id = id;
     }
     strncpy(entry->artikel, artikel, DB_MAX_TEXT - 1);
@@ -854,8 +854,8 @@ static void handle_db_delete(socket_t client, const HttpRequest *req) {
         return;
     }
     int index = -1;
-    for (int i = 0; i < db.count; i++) {
-        if (db.entries[i].id == id) {
+    for (int i = 0; i < db.anzahl; i++) {
+        if (db.eintraege[i].id == id) {
             index = i;
             break;
         }
@@ -864,10 +864,10 @@ static void handle_db_delete(socket_t client, const HttpRequest *req) {
         send_error(client, "404 Not Found", "Eintrag nicht gefunden");
         return;
     }
-    for (int i = index + 1; i < db.count; i++) {
-        db.entries[i - 1] = db.entries[i];
+    for (int i = index + 1; i < db.anzahl; i++) {
+        db.eintraege[i - 1] = db.eintraege[i];
     }
-    db.count--;
+    db.anzahl--;
     if (save_database(&db) != 0) {
         send_error(client, "500 Internal Server Error", "Speichern fehlgeschlagen");
         return;
@@ -1010,9 +1010,9 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
     }
     DatabaseEntry *first = NULL;
     DatabaseEntry *second = NULL;
-    for (int i = 0; i < db.count; i++) {
-        if (db.entries[i].id == first_id) first = &db.entries[i];
-        if (db.entries[i].id == second_id) second = &db.entries[i];
+    for (int i = 0; i < db.anzahl; i++) {
+        if (db.eintraege[i].id == first_id) first = &db.eintraege[i];
+        if (db.eintraege[i].id == second_id) second = &db.eintraege[i];
     }
     if (!first || !second) {
         send_error(client, "404 Not Found", "Eintrag nicht gefunden");
@@ -1128,8 +1128,8 @@ static void handle_compare_list(socket_t client, const HttpRequest *req) {
         int best_has_qty = 0;
         double best_unit_price = 0.0;
         int best_pack_price = 0;
-        for (int j = 0; j < db.count; j++) {
-            DatabaseEntry *entry = &db.entries[j];
+        for (int j = 0; j < db.anzahl; j++) {
+            DatabaseEntry *entry = &db.eintraege[j];
             if (strcmp(entry->artikel, article) != 0) continue;
             matches++;
             Quantity qty;
@@ -1156,7 +1156,7 @@ static void handle_compare_list(socket_t client, const HttpRequest *req) {
         buffer_append_str(&buf, ",\"anbieterGefunden\":");
         buffer_append_format(&buf, "%d", matches);
         if (best_idx >= 0) {
-            DatabaseEntry *best = &db.entries[best_idx];
+            DatabaseEntry *best = &db.eintraege[best_idx];
             buffer_append_str(&buf, ",\"empfehlung\":{");
             buffer_append_str(&buf, "\"anbieter\":");
             append_json_string(&buf, best->anbieter);
