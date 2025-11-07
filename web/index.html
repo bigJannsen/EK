@@ -69,8 +69,16 @@
                     <label>Preis (€)
                         <input type="number" id="add-preis" required min="0" step="0.01">
                     </label>
-                    <label>Menge
-                        <input type="text" id="add-menge" required>
+                    <label>Mengenwert
+                        <input type="number" id="add-mengewert" required min="0.01" step="0.01">
+                    </label>
+                    <label>Einheit
+                        <select id="add-mengeeinheit" required>
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="l">l</option>
+                            <option value="stk">Stk</option>
+                        </select>
                     </label>
                     <button type="submit">Eintrag hinzufügen</button>
                 </form>
@@ -88,8 +96,16 @@
                     <label>Preis (€)
                         <input type="number" id="edit-preis" required min="0" step="0.01">
                     </label>
-                    <label>Menge
-                        <input type="text" id="edit-menge" required>
+                    <label>Mengenwert
+                        <input type="number" id="edit-mengewert" required min="0.01" step="0.01">
+                    </label>
+                    <label>Einheit
+                        <select id="edit-mengeeinheit" required>
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="l">l</option>
+                            <option value="stk">Stk</option>
+                        </select>
                     </label>
                     <div class="form-actions">
                         <button type="submit">Änderungen speichern</button>

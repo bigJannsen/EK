@@ -12,7 +12,8 @@ typedef struct {
     char artikel[DB_MAX_TEXTLAENGE];
     char anbieter[DB_MAX_TEXTLAENGE];
     int preis_ct;
-    char menge[DB_MAX_TEXTLAENGE];
+    double menge_wert;
+    char menge_einheit[8];
 } DatenbankEintrag;
 
 typedef struct {
@@ -30,6 +31,10 @@ void zeige_datenbank(const Datenbank *datenbank);
 int bearbeite_datenbankeintrag(Datenbank *datenbank, int index);
 void bearbeite_datenbank(Datenbank *datenbank);
 int liste_csv_dateien(const char *verzeichnis, char dateien[][DB_MAX_DATEINAME], int max_dateien);
+
+void formatiere_mengenwert(double wert, char *ziel, size_t groesse);
+int lese_mengenwert_text(const char *text, double *wert);
+int normalisiere_mengeneinheit(const char *eingabe, char *ausgabe, size_t groesse, double *wert);
 
 #define DB_MAX_ENTRIES DB_MAX_EINTRAEGE
 #define DB_MAX_TEXT DB_MAX_TEXTLAENGE

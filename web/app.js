@@ -6,6 +6,18 @@ const toCentFromEuro = v => {
     return Number.isNaN(n) ? null : Math.round(n * 100);
 };
 
+const formatMenge = (wert, einheit) => {
+    const n = Number(wert);
+    let wertText;
+    if (Number.isFinite(n)) {
+        wertText = Math.abs(n - Math.round(n)) < 1e-6 ? String(Math.round(n)) : n.toString().replace('.', ',');
+    } else {
+        wertText = wert != null ? String(wert) : '';
+    }
+    const einheitText = einheit === 'stk' ? 'Stk' : einheit === 'l' ? 'L' : einheit === 'kg' ? 'Kg' : (einheit || '');
+    return einheitText ? `${wertText} ${einheitText}`.trim() : wertText;
+};
+
 // läuft, keine ahnung wie aber nicht anfassen !!!!!
 async function apiFetch(path, opt = {}) {
     const r = await fetch(path, opt), t = r.headers.get('content-type') || '';
@@ -37,7 +49,7 @@ function renderDatabaseTable() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
       <td>${e.id}</td><td>${e.artikel}</td><td>${e.anbieter}</td>
-      <td>${formatEuroFromCent(e.preisCent)}</td><td>${e.menge}</td>
+      <td>${formatEuroFromCent(e.preisCent)}</td><td>${formatMenge(e.mengeWert, e.mengeEinheit)}</td>
       <td class="action-buttons">
         <button type="button">Bearbeiten</button>
         <button type="button" class="danger">Löschen</button>
@@ -53,8 +65,12 @@ function renderDatabaseTable() {
 function openEntryEditor(e) {
     const f = el('edit-entry-form');
     f.hidden = false;
-    ['id','artikel','anbieter','preis','menge'].forEach(k =>
-        el(`edit-${k}`).value = k==='preis'?(e.preisCent/100).toFixed(2):e[k]);
+    el('edit-id').value = e.id;
+    el('edit-artikel').value = e.artikel;
+    el('edit-anbieter').value = e.anbieter;
+    el('edit-preis').value = (e.preisCent / 100).toFixed(2);
+    el('edit-mengewert').value = e.mengeWert ?? '';
+    el('edit-mengeeinheit').value = e.mengeEinheit || 'g';
     f.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 const closeEntryEditor = () => { const f = el('edit-entry-form'); f.hidden = true; f.reset(); };
@@ -81,13 +97,20 @@ async function loadDatabase(n) {
 async function modifyEntry(path, form, ids) {
     const preis = toCentFromEuro(el(`${form}-preis`).value);
     if (preis == null) return alert('Bitte gültigen Preis angeben.');
+    const mengeWertInput = el(`${form}-mengewert`);
+    const mengeEinheitInput = el(`${form}-mengeeinheit`);
+    const mengeWert = parseFloat(mengeWertInput.value.replace(',', '.'));
+    if (!Number.isFinite(mengeWert) || mengeWert <= 0) return alert('Bitte gültigen Mengenwert angeben.');
+    const mengeEinheit = mengeEinheitInput.value;
+    if (!mengeEinheit) return alert('Bitte Einheit wählen.');
     const body = createFormBody({
         name: state.currentDb,
         id: el(`${form}-id`).value,
         artikel: el(`${form}-artikel`).value.trim(),
         anbieter: el(`${form}-anbieter`).value.trim(),
         preisCent: preis,
-        menge: el(`${form}-menge`)?.value?.trim()
+        mengeWert: mengeWert,
+        mengeEinheit
     });
     try {
         await apiFetch(path, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
@@ -199,8 +222,11 @@ async function compareList(e){
         c.innerHTML=d.items.length?d.items.map(i=>{
             if(!i.anbieterGefunden)return `<div>${i.artikel}: Kein Anbieter gefunden.</div>`;
             if(i.empfehlung){
-                const p=(i.empfehlung.preisCent/100).toFixed(2),u=i.empfehlung.unit?`, ${(i.empfehlung.unitPrice/100).toFixed(4)} €/ ${i.empfehlung.unit}`:'';
-                return `<div>${i.artikel}: Bester Anbieter ${i.empfehlung.anbieter} (${p} €${u}).</div>`;
+                const mengeText=formatMenge(i.empfehlung.mengeWert, i.empfehlung.mengeEinheit);
+                const p=(i.empfehlung.preisCent/100).toFixed(2);
+                const u=i.empfehlung.unit?`, ${(i.empfehlung.unitPrice/100).toFixed(4)} €/ ${i.empfehlung.unit}`:'';
+                const mengeHinweis=mengeText?` für ${mengeText}`:'';
+                return `<div>${i.artikel}: Bester Anbieter ${i.empfehlung.anbieter} (${p} €${mengeHinweis}${u}).</div>`;
             }
             return `<div>${i.artikel}: Keine Empfehlung.</div>`;
         }).join(''):'<p>Liste leer.</p>';

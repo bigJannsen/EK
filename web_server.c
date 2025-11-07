@@ -428,6 +428,7 @@ static void split_list_entry(const char *line, char *article, size_t article_siz
 }
 
 static int unit_normalize(const char *unit, UnitType *type, double *factor) {
+    if (!unit || !type || !factor) return -1;
     if (strcmp(unit, "g") == 0) {
         *type = UNIT_GRAM;
         *factor = 1.0;
@@ -438,14 +439,14 @@ static int unit_normalize(const char *unit, UnitType *type, double *factor) {
         *factor = 1000.0;
         return 0;
     }
-    if (strcmp(unit, "ml") == 0) {
-        *type = UNIT_MILLILITER;
-        *factor = 1.0;
-        return 0;
-    }
     if (strcmp(unit, "l") == 0) {
         *type = UNIT_MILLILITER;
         *factor = 1000.0;
+        return 0;
+    }
+    if (strcmp(unit, "ml") == 0) {
+        *type = UNIT_MILLILITER;
+        *factor = 1.0;
         return 0;
     }
     if (strcmp(unit, "stk") == 0 || strcmp(unit, "st") == 0 || strcmp(unit, "stück") == 0) {
@@ -456,32 +457,13 @@ static int unit_normalize(const char *unit, UnitType *type, double *factor) {
     return -1;
 }
 
-static int parse_quantity_text(const char *text, Quantity *quantity) {
-    if (!text || !quantity) return -1;
-    char buffer[DB_MAX_TEXT];
-    strncpy(buffer, text, sizeof buffer - 1);
-    buffer[sizeof buffer - 1] = '\0';
-    char *p = buffer;
-    while (*p && isspace((unsigned char)*p)) p++;
-    for (char *c = p; *c; ++c) {
-        if (*c == ',') *c = '.';
-    }
-    char *end = NULL;
-    double value = strtod(p, &end);
-    if (end == p) return -1;
-    while (*end && isspace((unsigned char)*end)) end++;
-    if (*end == '\0') return -1;
-    char unit_buf[16];
-    size_t idx = 0;
-    while (*end && idx + 1 < sizeof unit_buf) {
-        unit_buf[idx++] = (char)tolower((unsigned char)*end);
-        end++;
-    }
-    unit_buf[idx] = '\0';
+static int entry_to_quantity(const DatabaseEntry *entry, Quantity *quantity) {
+    if (!entry || !quantity) return -1;
+    if (entry->menge_wert <= 0.0) return -1;
     UnitType type = UNIT_UNKNOWN;
     double factor = 0.0;
-    if (unit_normalize(unit_buf, &type, &factor) != 0) return -1;
-    quantity->amount = value * factor;
+    if (unit_normalize(entry->menge_einheit, &type, &factor) != 0) return -1;
+    quantity->amount = entry->menge_wert * factor;
     quantity->type = type;
     return 0;
 }
@@ -493,6 +475,15 @@ static const char *unit_label(UnitType type) {
         case UNIT_PIECE: return "Stück";
         default: return "";
     }
+}
+
+static void append_menge_json(Buffer *buf, const DatabaseEntry *entry) {
+    buffer_append_str(buf, ",\"mengeWert\":");
+    char mengen_text[32];
+    formatiere_mengenwert(entry->menge_wert, mengen_text, sizeof mengen_text);
+    buffer_append_format(buf, "%s", mengen_text);
+    buffer_append_str(buf, ",\"mengeEinheit\":");
+    append_json_string(buf, entry->menge_einheit);
 }
 
 static int parse_http_request(char *buffer, size_t length, HttpRequest *req) {
@@ -711,8 +702,7 @@ static void handle_db_get(socket_t client, const HttpRequest *req) {
         buffer_append_format(&buf, "%d", entry->preis_ct);
         buffer_append_str(&buf, ",\"preisEuro\":");
         buffer_append_format(&buf, "%.2f", entry->preis_ct / 100.0);
-        buffer_append_str(&buf, ",\"menge\":");
-        append_json_string(&buf, entry->menge);
+        append_menge_json(&buf, entry);
         buffer_append_char(&buf, '}');
     }
     buffer_append_str(&buf, "]}");
@@ -750,8 +740,9 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
     const char *artikel = find_param(req->body_params, req->body_count, "artikel");
     const char *anbieter = find_param(req->body_params, req->body_count, "anbieter");
     const char *preis_text = find_param(req->body_params, req->body_count, "preisCent");
-    const char *menge = find_param(req->body_params, req->body_count, "menge");
-    if (!name || !id_text || !artikel || !anbieter || !preis_text || !menge) {
+    const char *menge_wert_text = find_param(req->body_params, req->body_count, "mengeWert");
+    const char *menge_einheit_text = find_param(req->body_params, req->body_count, "mengeEinheit");
+    if (!name || !id_text || !artikel || !anbieter || !preis_text || !menge_wert_text || !menge_einheit_text) {
         send_error(client, "400 Bad Request", "Parameter fehlen");
         return;
     }
@@ -763,6 +754,17 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
     int preis = 0;
     if (parse_int_param(preis_text, &preis) != 0) {
         send_error(client, "400 Bad Request", "Ungültiger Preis");
+        return;
+    }
+    double mengenwert_roh = 0.0;
+    if (parse_double_param(menge_wert_text, &mengenwert_roh) != 0 || mengenwert_roh <= 0.0) {
+        send_error(client, "400 Bad Request", "Ungültiger Mengenwert");
+        return;
+    }
+    double mengenwert = mengenwert_roh;
+    char menge_einheit_norm[sizeof(((DatabaseEntry *)0)->menge_einheit)];
+    if (normalisiere_mengeneinheit(menge_einheit_text, menge_einheit_norm, sizeof menge_einheit_norm, &mengenwert) != 0) {
+        send_error(client, "400 Bad Request", "Ungültige Einheit");
         return;
     }
     char path[DB_MAX_FILENAME];
@@ -804,8 +806,9 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
     strncpy(entry->anbieter, anbieter, DB_MAX_TEXT - 1);
     entry->anbieter[DB_MAX_TEXT - 1] = '\0';
     entry->preis_ct = preis;
-    strncpy(entry->menge, menge, DB_MAX_TEXT - 1);
-    entry->menge[DB_MAX_TEXT - 1] = '\0';
+    entry->menge_wert = mengenwert;
+    strncpy(entry->menge_einheit, menge_einheit_norm, sizeof(entry->menge_einheit) - 1);
+    entry->menge_einheit[sizeof(entry->menge_einheit) - 1] = '\0';
     if (save_database(&db) != 0) {
         send_error(client, "500 Internal Server Error", "Speichern fehlgeschlagen");
         return;
@@ -824,8 +827,7 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
     append_json_string(&buf, entry->anbieter);
     buffer_append_str(&buf, ",\"preisCent\":");
     buffer_append_format(&buf, "%d", entry->preis_ct);
-    buffer_append_str(&buf, ",\"menge\":");
-    append_json_string(&buf, entry->menge);
+    append_menge_json(&buf, entry);
     buffer_append_str(&buf, "}}");
     send_json_response(client, "200 OK", buf.data, buf.len);
     buffer_free(&buf);
@@ -1020,7 +1022,7 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
     }
     Quantity qty_first;
     Quantity qty_second;
-    if (parse_quantity_text(first->menge, &qty_first) != 0 || parse_quantity_text(second->menge, &qty_second) != 0) {
+    if (entry_to_quantity(first, &qty_first) != 0 || entry_to_quantity(second, &qty_second) != 0) {
         send_error(client, "400 Bad Request", "Mengenangaben können nicht interpretiert werden");
         return;
     }
@@ -1055,8 +1057,7 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
     append_json_string(&buf, first->artikel);
     buffer_append_str(&buf, ",\"anbieter\":");
     append_json_string(&buf, first->anbieter);
-    buffer_append_str(&buf, ",\"menge\":");
-    append_json_string(&buf, first->menge);
+    append_menge_json(&buf, first);
     buffer_append_str(&buf, ",\"preisCent\":");
     buffer_append_format(&buf, "%d", first->preis_ct);
     buffer_append_str(&buf, ",\"unitPrice\":");
@@ -1070,8 +1071,7 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
     append_json_string(&buf, second->artikel);
     buffer_append_str(&buf, ",\"anbieter\":");
     append_json_string(&buf, second->anbieter);
-    buffer_append_str(&buf, ",\"menge\":");
-    append_json_string(&buf, second->menge);
+    append_menge_json(&buf, second);
     buffer_append_str(&buf, ",\"preisCent\":");
     buffer_append_format(&buf, "%d", second->preis_ct);
     buffer_append_str(&buf, ",\"unitPrice\":");
@@ -1135,7 +1135,7 @@ static void handle_compare_list(socket_t client, const HttpRequest *req) {
             Quantity qty;
             int has_qty = 0;
             double unit_price = 0.0;
-            if (parse_quantity_text(entry->menge, &qty) == 0 && qty.amount > 0.0) {
+            if (entry_to_quantity(entry, &qty) == 0 && qty.amount > 0.0) {
                 has_qty = 1;
                 unit_price = (double)entry->preis_ct / qty.amount;
             }
@@ -1160,12 +1160,11 @@ static void handle_compare_list(socket_t client, const HttpRequest *req) {
             buffer_append_str(&buf, ",\"empfehlung\":{");
             buffer_append_str(&buf, "\"anbieter\":");
             append_json_string(&buf, best->anbieter);
-            buffer_append_str(&buf, ",\"menge\":");
-            append_json_string(&buf, best->menge);
+            append_menge_json(&buf, best);
             buffer_append_str(&buf, ",\"preisCent\":");
             buffer_append_format(&buf, "%d", best->preis_ct);
             Quantity best_qty;
-            if (parse_quantity_text(best->menge, &best_qty) == 0 && best_qty.amount > 0.0) {
+            if (entry_to_quantity(best, &best_qty) == 0 && best_qty.amount > 0.0) {
                 buffer_append_str(&buf, ",\"unitPrice\":");
                 buffer_append_format(&buf, "%.6f", (double)best->preis_ct / best_qty.amount);
                 buffer_append_str(&buf, ",\"unit\":");
