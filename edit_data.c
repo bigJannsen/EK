@@ -201,8 +201,20 @@ void bearbeite_daten_menue(const char *verzeichnis) {
                         break;
                     }
                     eintrag->preis_ct = (int)preis;
-                    printf("Menge: ");
-                    lese_zeile(eintrag->menge, sizeof eintrag->menge);
+                    printf("Mengenwert: ");
+                    lese_zeile(puffer, sizeof puffer);
+                    double mengenwert = 0.0;
+                    if (puffer[0] == '\0' || lese_mengenwert_text(puffer, &mengenwert) != 0 || mengenwert < 0.0) {
+                        printf("Ungültiger Mengenwert.\n");
+                        break;
+                    }
+                    eintrag->menge_wert = mengenwert;
+                    printf("Einheit (g/kg/l/stk): ");
+                    lese_zeile(puffer, sizeof puffer);
+                    if (puffer[0] == '\0' || normalisiere_mengeneinheit(puffer, eintrag->menge_einheit, sizeof eintrag->menge_einheit, &eintrag->menge_wert) != 0) {
+                        printf("Ungültige Einheit.\n");
+                        break;
+                    }
                     datenbank.anzahl++;
                     geaendert = 1;
                     printf("Eintrag hinzugefügt.\n");

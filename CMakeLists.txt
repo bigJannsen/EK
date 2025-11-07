@@ -4,7 +4,9 @@ project(Einkaufsprojekt C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
+if (WIN32)
+    include_directories(${CMAKE_SOURCE_DIR}/include)
+endif()
 
 if (MSVC)
     add_compile_options(/W4)

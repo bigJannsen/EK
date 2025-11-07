@@ -1,45 +1,45 @@
-3,Butter,Aldi,199,400g
-4,Butter,Lidl,209,250g
-5,Eier 10er Freiland,Aldi,289,10St
-6,Eier 10er Freiland,Lidl,279,10St
-7,Weizenmehl Type 405,Aldi,49,1000g
-8,Weizenmehl Type 405,Lidl,59,1000g
-9,Zucker,Aldi,95,1000g
-10,Zucker,Lidl,89,1000g
-11,Kaffee gemahlen Classic,Aldi,499,500g
-12,Kaffee gemahlen Classic,Lidl,519,500g
-13,Schwarztee 25er Packung,Aldi,189,25St
-14,Schwarztee 25er Packung,Lidl,179,25St
-15,Spaghetti,Aldi,89,500g
-16,Spaghetti,Lidl,99,500g
-17,Reis Langkorn,Aldi,139,1000g
-18,Reis Langkorn,Lidl,149,1000g
-19,Toastbrot Weiß,Aldi,99,500g
-20,Toastbrot Weiß,Lidl,109,500g
-21,Apfel Braeburn,Aldi,299,1000g
-22,Apfel Braeburn,Lidl,319,1000g
-23,Banane,Aldi,149,1000g
-24,Banane,Lidl,159,1000g
-25,Gouda jung in Scheiben,Aldi,229,200g
-26,Gouda jung in Scheiben,Lidl,239,200g
-27,Joghurt Erdbeere,Aldi,59,150g
-28,Joghurt Erdbeere,Lidl,69,150g
-29,Quark Magerstufe,Aldi,89,250g
-30,Quark Magerstufe,Lidl,99,250g
-35,Orangensaft 1L,Aldi,149,1000ml
-36,Orangensaft 1L,Lidl,159,1000ml
-37,Paprika Mix,Aldi,249,500g
-38,Paprika Mix,Lidl,259,500g
-39,Zwiebeln 2kg Netz,Aldi,149,2000g
-40,Zwiebeln 2kg Netz,Lidl,159,2000g
-41,Tomaten Cocktail,Aldi,199,500g
-42,Tomaten Cocktail,Lidl,219,500g
-43,Schokolade Vollmilch,Aldi,89,100g
-44,Schokolade Vollmilch,Lidl,95,100g
-45,Chips Paprika,Aldi,149,200g
-46,Chips Paprika,Lidl,139,200g
-47,Spülmittel Lemon,Aldi,89,500ml
-48,Spülmittel Lemon,Lidl,95,500ml
-49,Butterkekse,Aldi,119,200g
-50,Butterkekse,Lidl,125,200g
-51,Eiweißpulver,ESN,5000,150g
+3,Butter,Aldi,199,400,g
+4,Butter,Lidl,209,250,g
+5,Eier 10er Freiland,Aldi,289,10,stk
+6,Eier 10er Freiland,Lidl,279,10,stk
+7,Weizenmehl Type 405,Aldi,49,1,kg
+8,Weizenmehl Type 405,Lidl,59,1,kg
+9,Zucker,Aldi,95,1,kg
+10,Zucker,Lidl,89,1,kg
+11,Kaffee gemahlen Classic,Aldi,499,500,g
+12,Kaffee gemahlen Classic,Lidl,519,500,g
+13,Schwarztee 25er Packung,Aldi,189,25,stk
+14,Schwarztee 25er Packung,Lidl,179,25,stk
+15,Spaghetti,Aldi,89,500,g
+16,Spaghetti,Lidl,99,500,g
+17,Reis Langkorn,Aldi,139,1,kg
+18,Reis Langkorn,Lidl,149,1,kg
+19,Toastbrot Weiß,Aldi,99,500,g
+20,Toastbrot Weiß,Lidl,109,500,g
+21,Apfel Braeburn,Aldi,299,1,kg
+22,Apfel Braeburn,Lidl,319,1,kg
+23,Banane,Aldi,149,1,kg
+24,Banane,Lidl,159,1,kg
+25,Gouda jung in Scheiben,Aldi,229,200,g
+26,Gouda jung in Scheiben,Lidl,239,200,g
+27,Joghurt Erdbeere,Aldi,59,150,g
+28,Joghurt Erdbeere,Lidl,69,150,g
+29,Quark Magerstufe,Aldi,89,250,g
+30,Quark Magerstufe,Lidl,99,250,g
+35,Orangensaft 1L,Aldi,149,1,l
+36,Orangensaft 1L,Lidl,159,1,l
+37,Paprika Mix,Aldi,249,500,g
+38,Paprika Mix,Lidl,259,500,g
+39,Zwiebeln 2kg Netz,Aldi,149,2,kg
+40,Zwiebeln 2kg Netz,Lidl,159,2,kg
+41,Tomaten Cocktail,Aldi,199,500,g
+42,Tomaten Cocktail,Lidl,219,500,g
+43,Schokolade Vollmilch,Aldi,89,100,g
+44,Schokolade Vollmilch,Lidl,95,100,g
+45,Chips Paprika,Aldi,149,200,g
+46,Chips Paprika,Lidl,139,200,g
+47,Spülmittel Lemon,Aldi,89,0.5,l
+48,Spülmittel Lemon,Lidl,95,0.5,l
+49,Butterkekse,Aldi,119,200,g
+50,Butterkekse,Lidl,125,200,g
+51,Eiweißpulver,ESN,5000,150,g

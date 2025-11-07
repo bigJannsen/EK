@@ -79,14 +79,14 @@ static int normalisiere_einheit(const char *einheit, Einheitstyp *typ, double *f
         *faktor = 1000.0;
         return 0;
     }
-    if (strcmp(einheit, "ml") == 0) {
-        *typ = EINHEIT_MILLILITER;
-        *faktor = 1.0;
-        return 0;
-    }
     if (strcmp(einheit, "l") == 0) {
         *typ = EINHEIT_MILLILITER;
         *faktor = 1000.0;
+        return 0;
+    }
+    if (strcmp(einheit, "ml") == 0) {
+        *typ = EINHEIT_MILLILITER;
+        *faktor = 1.0;
         return 0;
     }
     if (strcmp(einheit, "stk") == 0 || strcmp(einheit, "st") == 0 || strcmp(einheit, "stück") == 0) {
@@ -97,34 +97,30 @@ static int normalisiere_einheit(const char *einheit, Einheitstyp *typ, double *f
     return -1;
 }
 
-static int interpretiere_mengentext(const char *text, Mengenangabe *mengenangabe) {
-    if (!text || !mengenangabe) return -1;
-    char puffer[DB_MAX_TEXTLAENGE];
-    strncpy(puffer, text, sizeof puffer - 1);
-    puffer[sizeof puffer - 1] = '\0';
-    char *position = puffer;
-    while (*position && isspace((unsigned char)*position)) position++;
-    for (char *zeichen = position; *zeichen; ++zeichen) {
-        if (*zeichen == ',') *zeichen = '.';
-    }
-    char *ende = NULL;
-    double wert = strtod(position, &ende);
-    if (ende == position) return -1;
-    while (*ende && isspace((unsigned char)*ende)) ende++;
-    if (*ende == '\0') return -1;
-    char einheit_puffer[16];
-    size_t index = 0;
-    while (*ende && index + 1 < sizeof einheit_puffer) {
-        einheit_puffer[index++] = (char)tolower((unsigned char)*ende);
-        ende++;
-    }
-    einheit_puffer[index] = '\0';
+static int ermittle_mengenangabe(const DatenbankEintrag *eintrag, Mengenangabe *mengenangabe) {
+    if (!eintrag || !mengenangabe) return -1;
+    if (eintrag->menge_wert <= 0.0) return -1;
     Einheitstyp typ = EINHEIT_UNBEKANNT;
     double faktor = 0.0;
-    if (normalisiere_einheit(einheit_puffer, &typ, &faktor) != 0) return -1;
-    mengenangabe->menge = wert * faktor;
+    if (normalisiere_einheit(eintrag->menge_einheit, &typ, &faktor) != 0) return -1;
+    mengenangabe->menge = eintrag->menge_wert * faktor;
     mengenangabe->typ = typ;
     return 0;
+}
+
+static const char *anzeige_einheit(const char *einheit) {
+    if (!einheit) return "";
+    if (strcmp(einheit, "stk") == 0) return "Stk";
+    if (strcmp(einheit, "l") == 0) return "L";
+    if (strcmp(einheit, "kg") == 0) return "Kg";
+    return einheit;
+}
+
+static void beschreibe_menge(const DatenbankEintrag *eintrag, char *ziel, size_t groesse) {
+    if (!ziel || groesse == 0 || !eintrag) return;
+    char wert[32];
+    formatiere_mengenwert(eintrag->menge_wert, wert, sizeof wert);
+    snprintf(ziel, groesse, "%s %s", wert, anzeige_einheit(eintrag->menge_einheit));
 }
 
 static int waehle_datenbank_pfad(const char *verzeichnis, char *ausgabepfad, size_t ausgabe_groesse) {
@@ -265,8 +261,8 @@ static void vergleiche_einzeln(Datenbank *datenbank) {
     DatenbankEintrag *zweiter = waehle_eintrag(datenbank, "ID des zweiten Eintrags: ", erster->id);
     Mengenangabe menge_erster;
     Mengenangabe menge_zweiter;
-    if (interpretiere_mengentext(erster->menge, &menge_erster) != 0 ||
-        interpretiere_mengentext(zweiter->menge, &menge_zweiter) != 0) {
+    if (ermittle_mengenangabe(erster, &menge_erster) != 0 ||
+        ermittle_mengenangabe(zweiter, &menge_zweiter) != 0) {
         printf("Mengenangaben konnten nicht interpretiert werden.\n");
         return;
     }
@@ -281,13 +277,16 @@ static void vergleiche_einzeln(Datenbank *datenbank) {
     double gesamt_zweiter = preis_pro_einheit_zweiter * gewuenschte_menge;
     const char *einheit = einheits_bezeichnung(menge_erster.typ);
     printf("\nVergleich der Produkte für %.2f %s:\n", gewuenschte_menge, einheit);
+    char beschreibung[64];
     printf("1) %s (%s)\n", erster->artikel, erster->anbieter);
-    printf("   Menge pro Packung: %s\n", erster->menge);
+    beschreibe_menge(erster, beschreibung, sizeof beschreibung);
+    printf("   Menge pro Packung: %s\n", beschreibung);
     printf("   Preis pro Packung: %d ct (%.2f €)\n", erster->preis_ct, erster->preis_ct / 100.0);
     printf("   Preis pro %s: %.4f ct\n", einheit, preis_pro_einheit_erster);
     printf("   Preis für %.2f %s: %.2f € (%.2f ct)\n\n", gewuenschte_menge, einheit, gesamt_erster / 100.0, gesamt_erster);
     printf("2) %s (%s)\n", zweiter->artikel, zweiter->anbieter);
-    printf("   Menge pro Packung: %s\n", zweiter->menge);
+    beschreibe_menge(zweiter, beschreibung, sizeof beschreibung);
+    printf("   Menge pro Packung: %s\n", beschreibung);
     printf("   Preis pro Packung: %d ct (%.2f €)\n", zweiter->preis_ct, zweiter->preis_ct / 100.0);
     printf("   Preis pro %s: %.4f ct\n", einheit, preis_pro_einheit_zweiter);
     printf("   Preis für %.2f %s: %.2f € (%.2f ct)\n", gewuenschte_menge, einheit, gesamt_zweiter / 100.0, gesamt_zweiter);
@@ -333,11 +332,13 @@ static void vergleiche_einkaufsliste(Datenbank *datenbank, const char *listen_da
             Mengenangabe mengenangabe;
             int hat_menge = 0;
             double einheitspreis = 0.0;
-            if (interpretiere_mengentext(eintrag->menge, &mengenangabe) == 0 && mengenangabe.menge > 0.0) {
+            if (ermittle_mengenangabe(eintrag, &mengenangabe) == 0 && mengenangabe.menge > 0.0) {
                 hat_menge = 1;
                 einheitspreis = (double)eintrag->preis_ct / mengenangabe.menge;
             }
-            printf("  - %s: %d ct (%.2f €) pro Packung, %s", eintrag->anbieter, eintrag->preis_ct, eintrag->preis_ct / 100.0, eintrag->menge);
+            char beschreibung[64];
+            beschreibe_menge(eintrag, beschreibung, sizeof beschreibung);
+            printf("  - %s: %d ct (%.2f €) pro Packung, %s", eintrag->anbieter, eintrag->preis_ct, eintrag->preis_ct / 100.0, beschreibung);
             if (hat_menge) {
                 printf(", %.4f ct pro %s", einheitspreis, einheits_bezeichnung(mengenangabe.typ));
             }
@@ -365,7 +366,9 @@ static void vergleiche_einkaufsliste(Datenbank *datenbank, const char *listen_da
         }
         if (bester_index >= 0) {
             DatenbankEintrag *bester = &datenbank->eintraege[bester_index];
-            printf("  -> Günstigster Anbieter: %s (%s) mit %d ct pro Packung\n", bester->anbieter, bester->menge, bester->preis_ct);
+            char beschreibung[64];
+            beschreibe_menge(bester, beschreibung, sizeof beschreibung);
+            printf("  -> Günstigster Anbieter: %s (%s) mit %d ct pro Packung\n", bester->anbieter, beschreibung, bester->preis_ct);
             beste_indizes[i] = bester_index;
         }
     }

@@ -29,6 +29,70 @@ static void lese_zeile(char *puffer, size_t groesse) {
     puffer[strcspn(puffer, "\r\n")] = '\0';
 }
 
+void formatiere_mengenwert(double wert, char *ziel, size_t groesse) {
+    if (!ziel || groesse == 0) return;
+    snprintf(ziel, groesse, "%.6f", wert);
+    char *komma = strchr(ziel, '.');
+    if (!komma) return;
+    char *ende = ziel + strlen(ziel) - 1;
+    while (ende > komma && *ende == '0') {
+        *ende-- = '\0';
+    }
+    if (ende == komma) *ende = '\0';
+}
+
+int normalisiere_mengeneinheit(const char *eingabe, char *ausgabe, size_t groesse, double *wert) {
+    if (!eingabe || !ausgabe || groesse == 0 || !wert) return -1;
+    char puffer[16];
+    size_t index = 0;
+    for (const char *c = eingabe; *c && index + 1 < sizeof puffer; ++c) {
+        puffer[index++] = (char)tolower((unsigned char)*c);
+    }
+    puffer[index] = '\0';
+    if (strcmp(puffer, "g") == 0 || strcmp(puffer, "gramm") == 0) {
+        strncpy(ausgabe, "g", groesse - 1);
+        ausgabe[groesse - 1] = '\0';
+        return 0;
+    }
+    if (strcmp(puffer, "kg") == 0 || strcmp(puffer, "kilogramm") == 0) {
+        strncpy(ausgabe, "kg", groesse - 1);
+        ausgabe[groesse - 1] = '\0';
+        return 0;
+    }
+    if (strcmp(puffer, "l") == 0 || strcmp(puffer, "liter") == 0) {
+        strncpy(ausgabe, "l", groesse - 1);
+        ausgabe[groesse - 1] = '\0';
+        return 0;
+    }
+    if (strcmp(puffer, "ml") == 0) {
+        *wert /= 1000.0;
+        strncpy(ausgabe, "l", groesse - 1);
+        ausgabe[groesse - 1] = '\0';
+        return 0;
+    }
+    if (strcmp(puffer, "stk") == 0 || strcmp(puffer, "st") == 0 || strcmp(puffer, "stück") == 0 || strcmp(puffer, "stueck") == 0) {
+        strncpy(ausgabe, "stk", groesse - 1);
+        ausgabe[groesse - 1] = '\0';
+        return 0;
+    }
+    return -1;
+}
+
+int lese_mengenwert_text(const char *text, double *wert) {
+    if (!text || !wert) return -1;
+    char puffer[DB_MAX_TEXTLAENGE];
+    strncpy(puffer, text, sizeof puffer - 1);
+    puffer[sizeof puffer - 1] = '\0';
+    for (char *c = puffer; *c; ++c) {
+        if (*c == ',') *c = '.';
+    }
+    char *ende = NULL;
+    double ergebnis = strtod(puffer, &ende);
+    if (ende == puffer || (ende && *ende != '\0')) return -1;
+    *wert = ergebnis;
+    return 0;
+}
+
 int lade_datenbank(const char *dateipfad, Datenbank *datenbank) {
     if (!dateipfad || !datenbank) return -1;
     FILE *datei = fopen(dateipfad, "r");
@@ -40,21 +104,24 @@ int lade_datenbank(const char *dateipfad, Datenbank *datenbank) {
     while (fgets(zeile, sizeof zeile, datei)) {
         zeile[strcspn(zeile, "\r\n")] = '\0';
         if (zeile[0] == '\0') continue;
-        char *felder[5];
+        char *felder[6];
         int feldanzahl = 0;
         char *teil = strtok(zeile, ",");
-        while (teil && feldanzahl < 5) {
+        while (teil && feldanzahl < 6) {
             felder[feldanzahl++] = teil;
             teil = strtok(NULL, ",");
         }
-        if (feldanzahl != 5 || datenbank->anzahl >= DB_MAX_EINTRAEGE) continue;
-        for (int i = 0; i < 5; i++) entferne_leerraum(felder[i]);
+        if (feldanzahl != 6 || datenbank->anzahl >= DB_MAX_EINTRAEGE) continue;
+        for (int i = 0; i < 6; i++) entferne_leerraum(felder[i]);
         char *endstelle = NULL;
         long kennung = strtol(felder[0], &endstelle, 10);
         if (!endstelle || *endstelle != '\0') continue;
         endstelle = NULL;
         long preis = strtol(felder[3], &endstelle, 10);
         if (!endstelle || *endstelle != '\0') continue;
+        double mengenwert = 0.0;
+        if (lese_mengenwert_text(felder[4], &mengenwert) != 0) continue;
+        if (mengenwert < 0.0) continue;
         DatenbankEintrag *eintrag = &datenbank->eintraege[datenbank->anzahl++];
         eintrag->id = (int)kennung;
         strncpy(eintrag->artikel, felder[1], DB_MAX_TEXTLAENGE - 1);
@@ -62,8 +129,11 @@ int lade_datenbank(const char *dateipfad, Datenbank *datenbank) {
         strncpy(eintrag->anbieter, felder[2], DB_MAX_TEXTLAENGE - 1);
         eintrag->anbieter[DB_MAX_TEXTLAENGE - 1] = '\0';
         eintrag->preis_ct = (int)preis;
-        strncpy(eintrag->menge, felder[4], DB_MAX_TEXTLAENGE - 1);
-        eintrag->menge[DB_MAX_TEXTLAENGE - 1] = '\0';
+        eintrag->menge_wert = mengenwert;
+        if (normalisiere_mengeneinheit(felder[5], eintrag->menge_einheit, sizeof eintrag->menge_einheit, &eintrag->menge_wert) != 0) {
+            datenbank->anzahl--;
+            continue;
+        }
     }
     fclose(datei);
     return 0;
@@ -75,7 +145,9 @@ int speichere_datenbank(const Datenbank *datenbank) {
     if (!datei) return -1;
     for (int i = 0; i < datenbank->anzahl; i++) {
         const DatenbankEintrag *eintrag = &datenbank->eintraege[i];
-        fprintf(datei, "%d,%s,%s,%d,%s\n", eintrag->id, eintrag->artikel, eintrag->anbieter, eintrag->preis_ct, eintrag->menge);
+        char mengen_text[32];
+        formatiere_mengenwert(eintrag->menge_wert, mengen_text, sizeof mengen_text);
+        fprintf(datei, "%d,%s,%s,%d,%s,%s\n", eintrag->id, eintrag->artikel, eintrag->anbieter, eintrag->preis_ct, mengen_text, eintrag->menge_einheit);
     }
     fclose(datei);
     return 0;
@@ -91,7 +163,13 @@ void zeige_datenbank(const Datenbank *datenbank) {
     } else {
         for (int i = 0; i < datenbank->anzahl; i++) {
             const DatenbankEintrag *eintrag = &datenbank->eintraege[i];
-            printf("%d | %s | %s | %d | %s\n", eintrag->id, eintrag->artikel, eintrag->anbieter, eintrag->preis_ct, eintrag->menge);
+            char mengen_text[32];
+            formatiere_mengenwert(eintrag->menge_wert, mengen_text, sizeof mengen_text);
+            const char *einheit = eintrag->menge_einheit;
+            if (strcmp(einheit, "stk") == 0) einheit = "Stk";
+            else if (strcmp(einheit, "l") == 0) einheit = "L";
+            else if (strcmp(einheit, "kg") == 0) einheit = "Kg";
+            printf("%d | %s | %s | %d | %s %s\n", eintrag->id, eintrag->artikel, eintrag->anbieter, eintrag->preis_ct, mengen_text, einheit);
         }
     }
     printf("=============================================\n");
@@ -127,11 +205,27 @@ int bearbeite_datenbankeintrag(Datenbank *datenbank, int index) {
         long wert = strtol(puffer, &endstelle, 10);
         if (endstelle && *endstelle == '\0') eintrag->preis_ct = (int)wert;
     }
-    printf("Menge (%s): ", eintrag->menge);
+    char mengen_text[32];
+    formatiere_mengenwert(eintrag->menge_wert, mengen_text, sizeof mengen_text);
+    printf("Menge (%s): ", mengen_text);
     lese_zeile(puffer, sizeof puffer);
     if (puffer[0] != '\0') {
-        strncpy(eintrag->menge, puffer, DB_MAX_TEXTLAENGE - 1);
-        eintrag->menge[DB_MAX_TEXTLAENGE - 1] = '\0';
+        double neuer_wert = 0.0;
+        if (lese_mengenwert_text(puffer, &neuer_wert) == 0 && neuer_wert >= 0.0) {
+            eintrag->menge_wert = neuer_wert;
+        }
+    }
+    const char *aktuelle_einheit = eintrag->menge_einheit;
+    if (strcmp(aktuelle_einheit, "stk") == 0) aktuelle_einheit = "Stk";
+    else if (strcmp(aktuelle_einheit, "l") == 0) aktuelle_einheit = "L";
+    else if (strcmp(aktuelle_einheit, "kg") == 0) aktuelle_einheit = "Kg";
+    printf("Einheit (%s): ", aktuelle_einheit);
+    lese_zeile(puffer, sizeof puffer);
+    if (puffer[0] != '\0') {
+        double wert_dummy = eintrag->menge_wert;
+        if (normalisiere_mengeneinheit(puffer, eintrag->menge_einheit, sizeof eintrag->menge_einheit, &wert_dummy) == 0) {
+            eintrag->menge_wert = wert_dummy;
+        }
     }
     return 0;
 }
