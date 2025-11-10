@@ -8,6 +8,11 @@ int main(void) {
 
 
 
+/* Antwort: Das Programm startet in main nur den run_server() aus web_server.c. web_server.c
+ * verarbeitet alle HTTP-Anfragen selbst und nutzt dafür direkt die Funktionen aus
+ * crud_database.c; die Module edit_data.c, edit_list.c und preis_vergleich.c werden auf
+ * diesem Weg nicht eingebunden. */
+
 /*
 Windows:
 1. [Für euch: Visual Studio 2022 Community oder Visual Studio Build Tools installieren (C++ Desktop-Workload)]
