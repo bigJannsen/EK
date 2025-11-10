@@ -17,7 +17,8 @@ endif()
 set(SOURCES
         main.c
         web_server.c
-        crud_database.c)
+        crud_database.c
+        userinput_pruefung.c)
 
 add_executable(einkaufsprojekt ${SOURCES})
 

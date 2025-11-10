@@ -1,5 +1,6 @@
 #include "web_server.h"
 #include "crud_database.h"
+#include "userinput_pruefung.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
+#include <limits.h>
 #include <stdarg.h>
 
 #ifdef _WIN32
@@ -809,6 +811,10 @@ static void handle_db_get(socket_t client, const HttpRequest *req) {
         send_error(client, "400 Bad Request", "Parameter 'name' fehlt");
         return;
     }
+    if (pruefe_dateiname(name, DB_MAX_FILENAME - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Datenbankname");
+        return;
+    }
     char path[DB_MAX_FILENAME];
     if (resolve_database_path(name, path, sizeof path) != 0) {
         send_error(client, "404 Not Found", "Datenbank nicht gefunden");
@@ -854,6 +860,9 @@ static int parse_int_param(const char *value, int *out) {
     if (value == NULL) {
         return -1;
     }
+    if (pruefe_ganzzahl_eingabe(value, LONG_MIN, LONG_MAX) != 0) {
+        return -1;
+    }
     char *end = NULL;
     long v = strtol(value, &end, 10);
     if (end == NULL || *end != '\0') {
@@ -865,6 +874,9 @@ static int parse_int_param(const char *value, int *out) {
 
 static int parse_double_param(const char *value, double *out) {
     if (value == NULL) {
+        return -1;
+    }
+    if (pruefe_dezimalzahl_eingabe(value, -1e12, 1e12, 6) != 0) {
         return -1;
     }
     char buffer[64];
@@ -921,13 +933,37 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
         send_error(client, "400 Bad Request", "Parameter fehlen");
         return;
     }
+    if (pruefe_dateiname(name, DB_MAX_FILENAME - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Datenbankname");
+        return;
+    }
+    if (pruefe_text_eingabe(artikel, DB_MAX_TEXT - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Artikeltext");
+        return;
+    }
+    if (pruefe_text_eingabe(anbieter, DB_MAX_TEXT - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Anbietertext");
+        return;
+    }
+    if (pruefe_text_eingabe(menge_einheit_text, sizeof(((DatabaseEntry *)0)->menge_einheit) - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültige Mengeneinheit");
+        return;
+    }
     int id = 0;
     if (parse_int_param(id_text, &id) != 0) {
         send_error(client, "400 Bad Request", "Ungültige ID");
         return;
     }
+    if (id < 0) {
+        send_error(client, "400 Bad Request", "Ungültige ID");
+        return;
+    }
     int preis = 0;
     if (parse_int_param(preis_text, &preis) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Preis");
+        return;
+    }
+    if (preis < 0) {
         send_error(client, "400 Bad Request", "Ungültiger Preis");
         return;
     }
@@ -1007,6 +1043,10 @@ static void handle_db_delete(socket_t client, const HttpRequest *req) {
     const char *id_text = find_param(req->body_params, req->body_count, "id");
     if (name == NULL || id_text == NULL) {
         send_error(client, "400 Bad Request", "Parameter fehlen");
+        return;
+    }
+    if (pruefe_dateiname(name, DB_MAX_FILENAME - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Datenbankname");
         return;
     }
     int id = 0;
@@ -1108,6 +1148,14 @@ static void handle_list_add_or_update(socket_t client, const HttpRequest *req, i
         send_error(client, "400 Bad Request", "Artikel fehlt");
         return;
     }
+    if (pruefe_text_eingabe(artikel, SHOPPING_LIST_MAX_LEN - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Artikeltext");
+        return;
+    }
+    if (pruefe_optionalen_text(anbieter, SHOPPING_LIST_MAX_LEN - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Anbietertext");
+        return;
+    }
     char items[SHOPPING_LIST_MAX_ITEMS][SHOPPING_LIST_MAX_LEN];
     int count = load_shopping_list(items);
     if (is_update) {
@@ -1174,10 +1222,18 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
         send_error(client, "400 Bad Request", "Parameter fehlen");
         return;
     }
+    if (pruefe_dateiname(name, DB_MAX_FILENAME - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Datenbankname");
+        return;
+    }
     int first_id = 0;
     int second_id = 0;
     double amount = 0.0;
     if (parse_int_param(first_id_text, &first_id) != 0 || parse_int_param(second_id_text, &second_id) != 0) {
+        send_error(client, "400 Bad Request", "Ungültige IDs");
+        return;
+    }
+    if (first_id < 0 || second_id < 0) {
         send_error(client, "400 Bad Request", "Ungültige IDs");
         return;
     }
@@ -1270,11 +1326,19 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
 static void handle_compare_list(socket_t client, const HttpRequest *req) {
     const char *name = find_param(req->body_params, req->body_count, "name");
     const char *apply_text = find_param(req->body_params, req->body_count, "apply");
-    int apply = (apply_text != NULL && strcmp(apply_text, "1") == 0) ? 1 : 0;
     if (name == NULL || *name == '\0') {
         send_error(client, "400 Bad Request", "Parameter 'name' fehlt");
         return;
     }
+    if (pruefe_dateiname(name, DB_MAX_FILENAME - 1) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Datenbankname");
+        return;
+    }
+    if (pruefe_flag_eingabe(apply_text) != 0) {
+        send_error(client, "400 Bad Request", "Ungültiger Schalterwert");
+        return;
+    }
+    int apply = (apply_text != NULL && strcmp(apply_text, "1") == 0) ? 1 : 0;
     char path[DB_MAX_FILENAME];
     if (resolve_database_path(name, path, sizeof path) != 0) {
         send_error(client, "404 Not Found", "Datenbank nicht gefunden");
