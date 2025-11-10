@@ -2,13 +2,13 @@
 #include "web_server.h"
 
 int main(void) {
-    return run_server();
+    return server_starten();
 }
 
 
 
 
-/* Antwort: Das Programm startet in main nur den run_server() aus web_server.c. web_server.c
+/* Antwort: Das Programm startet in main nur den server_starten() aus web_server.c. web_server.c
  * verarbeitet alle HTTP-Anfragen selbst und nutzt dafür direkt die Funktionen aus
  * crud_database.c; die Module edit_data.c, edit_list.c und preis_vergleich.c werden auf
  * diesem Weg nicht eingebunden. */
