@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "web_server.h"
+#include "startup_testfunktion.h"
 
 int main(void) {
     return server_starten();

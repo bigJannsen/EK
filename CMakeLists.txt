@@ -18,7 +18,8 @@ set(SOURCES
         main.c
         web_server.c
         crud_database.c
-        userinput_pruefung.c)
+        userinput_pruefung.c
+        startup_testfunktion.c)
 
 add_executable(einkaufsprojekt ${SOURCES})
 
