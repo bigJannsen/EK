@@ -1,4 +1,4 @@
-const state = { databases: [], currentDb: null, entries: [], list: [] };
+const state = { databases: [], currentDb: null, entries: [], list: [], entryFilter: '' };
 
 const formatEuroFromCent = v => (v / 100).toFixed(2).replace('.', ',');
 const toCentFromEuro = v => {
@@ -42,10 +42,35 @@ function fillDatabaseSelect() {
     if (state.currentDb) s.value = state.currentDb;
 }
 
+function getFilteredEntries() {
+    const filter = state.entryFilter.trim().toLowerCase();
+    if (!filter) return state.entries;
+    return state.entries.filter(e => {
+        return [e.id, e.artikel, e.anbieter]
+            .filter(Boolean)
+            .map(v => String(v).toLowerCase())
+            .some(v => v.includes(filter));
+    });
+}
+
 function renderDatabaseTable() {
     const tbody = document.querySelector('#database-table tbody');
     tbody.innerHTML = '';
-    state.entries.forEach(e => {
+    const items = getFilteredEntries();
+
+    if (!items.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.className = 'empty-message';
+        td.textContent = state.entries.length ? 'Keine Einträge passend zur Suche gefunden.' : 'Keine Einträge vorhanden.';
+        tr.append(td);
+        tbody.append(tr);
+        updateCompareSelectors();
+        return;
+    }
+
+    items.forEach(e => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
       <td>${e.id}</td><td>${e.artikel}</td><td>${e.anbieter}</td>
@@ -245,5 +270,22 @@ function initEventListeners(){
     el('cancel-list-edit').onclick=closeListEditor;
     el('single-compare-form').onsubmit=compareSingle;
     el('list-compare-form').onsubmit=compareList;
+    const searchInput = el('database-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', e => {
+            state.entryFilter = e.target.value;
+            renderDatabaseTable();
+        });
+    }
+    const clearSearch = el('clear-database-search');
+    if (clearSearch) {
+        clearSearch.addEventListener('click', () => {
+            if (!state.entryFilter) return;
+            state.entryFilter = '';
+            searchInput.value = '';
+            renderDatabaseTable();
+            searchInput.focus();
+        });
+    }
 }
 (async()=>{initEventListeners();await loadDatabases();await loadList();})();
