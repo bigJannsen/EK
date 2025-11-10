@@ -12,7 +12,7 @@ static void entferne_leerraum(char *text) {
         return;
     }
     char *anfang = text;
-    while (*anfang && isspace((unsigned char)*anfang)) {
+    while (*anfang != '\0' && isspace((unsigned char)*anfang)) {
         anfang++;
     }
     if (anfang != text) {
@@ -29,7 +29,7 @@ static void lese_zeile(char *puffer, size_t groesse) {
     if (puffer == NULL || groesse == 0) {
         return;
     }
-    if (!fgets(puffer, (int)groesse, stdin)) {
+    if (fgets(puffer, (int)groesse, stdin) == NULL) {
         puffer[0] = '\0';
         clearerr(stdin);
         return;
@@ -48,7 +48,8 @@ void formatiere_mengenwert(double wert, char *ziel, size_t groesse) {
     }
     char *ende = ziel + strlen(ziel) - 1;
     while (ende > komma && *ende == '0') {
-        *ende-- = '\0';
+        *ende = '\0';
+        ende--;
     }
     if (ende == komma) {
         *ende = '\0';
@@ -60,11 +61,12 @@ int normalisiere_mengeneinheit(const char *eingabe, char *ausgabe, size_t groess
         return -1;
     }
     char puffer[16];
-    size_t index = 0;
-    for (const char *zeichen = eingabe; *zeichen && index + 1 < sizeof puffer; ++zeichen) {
-        puffer[index++] = (char)tolower((unsigned char)*zeichen);
+    size_t zeichen_index = 0;
+    for (const char *zeichen = eingabe; *zeichen != '\0' && zeichen_index + 1 < sizeof puffer; ++zeichen) {
+        puffer[zeichen_index] = (char)tolower((unsigned char)*zeichen);
+        zeichen_index++;
     }
-    puffer[index] = '\0';
+    puffer[zeichen_index] = '\0';
     if (strcmp(puffer, "g") == 0 || strcmp(puffer, "gramm") == 0) {
         strncpy(ausgabe, "g", groesse - 1);
         ausgabe[groesse - 1] = '\0';
@@ -101,7 +103,7 @@ int lese_mengenwert_text(const char *text, double *wert) {
     char puffer[DB_MAX_TEXTLAENGE];
     strncpy(puffer, text, sizeof puffer - 1);
     puffer[sizeof puffer - 1] = '\0';
-    for (char *zeichen = puffer; *zeichen; ++zeichen) {
+    for (char *zeichen = puffer; *zeichen != '\0'; ++zeichen) {
         if (*zeichen == ',') {
             *zeichen = '.';
         }
@@ -120,14 +122,14 @@ int lade_datenbank(const char *dateipfad, Datenbank *datenbank) {
         return -1;
     }
     FILE *datei = fopen(dateipfad, "r");
-    if (!datei) {
+    if (datei == NULL) {
         return -1;
     }
     datenbank->anzahl = 0;
     strncpy(datenbank->dateiname, dateipfad, DB_MAX_DATEINAME - 1);
     datenbank->dateiname[DB_MAX_DATEINAME - 1] = '\0';
     char zeile[512];
-    while (fgets(zeile, sizeof zeile, datei)) {
+    while (fgets(zeile, sizeof zeile, datei) != NULL) {
         zeile[strcspn(zeile, "\r\n")] = '\0';
         if (zeile[0] == '\0') {
             continue;
@@ -135,8 +137,9 @@ int lade_datenbank(const char *dateipfad, Datenbank *datenbank) {
         char *felder[6];
         int feldanzahl = 0;
         char *teil = strtok(zeile, ",");
-        while (teil && feldanzahl < 6) {
-            felder[feldanzahl++] = teil;
+        while (teil != NULL && feldanzahl < 6) {
+            felder[feldanzahl] = teil;
+            feldanzahl++;
             teil = strtok(NULL, ",");
         }
         if (feldanzahl != 6 || datenbank->anzahl >= DB_MAX_EINTRAEGE) {
@@ -162,7 +165,8 @@ int lade_datenbank(const char *dateipfad, Datenbank *datenbank) {
         if (mengenwert < 0.0) {
             continue;
         }
-        DatenbankEintrag *eintrag = &datenbank->eintraege[datenbank->anzahl++];
+        DatenbankEintrag *eintrag = &datenbank->eintraege[datenbank->anzahl];
+        datenbank->anzahl++;
         eintrag->id = (int)kennung;
         strncpy(eintrag->artikel, felder[1], DB_MAX_TEXTLAENGE - 1);
         eintrag->artikel[DB_MAX_TEXTLAENGE - 1] = '\0';
@@ -184,11 +188,11 @@ int speichere_datenbank(const Datenbank *datenbank) {
         return -1;
     }
     FILE *datei = fopen(datenbank->dateiname, "w");
-    if (!datei) {
+    if (datei == NULL) {
         return -1;
     }
-    for (int i = 0; i < datenbank->anzahl; i++) {
-        const DatenbankEintrag *eintrag = &datenbank->eintraege[i];
+    for (int eintrags_index = 0; eintrags_index < datenbank->anzahl; eintrags_index++) {
+        const DatenbankEintrag *eintrag = &datenbank->eintraege[eintrags_index];
         char mengen_text[32];
         formatiere_mengenwert(eintrag->menge_wert, mengen_text, sizeof mengen_text);
         fprintf(datei, "%d,%s,%s,%d,%s,%s\n", eintrag->id, eintrag->artikel, eintrag->anbieter, eintrag->preis_ct, mengen_text, eintrag->menge_einheit);
@@ -207,8 +211,8 @@ void zeige_datenbank(const Datenbank *datenbank) {
     if (datenbank->anzahl == 0) {
         printf("Keine Einträge vorhanden.\n");
     } else {
-        for (int i = 0; i < datenbank->anzahl; i++) {
-            const DatenbankEintrag *eintrag = &datenbank->eintraege[i];
+        for (int eintrags_index = 0; eintrags_index < datenbank->anzahl; eintrags_index++) {
+            const DatenbankEintrag *eintrag = &datenbank->eintraege[eintrags_index];
             char mengen_text[32];
             formatiere_mengenwert(eintrag->menge_wert, mengen_text, sizeof mengen_text);
             const char *einheit = eintrag->menge_einheit;
@@ -225,11 +229,11 @@ void zeige_datenbank(const Datenbank *datenbank) {
     printf("=============================================\n");
 }
 
-int bearbeite_datenbankeintrag(Datenbank *datenbank, int index) {
-    if (datenbank == NULL || index < 0 || index >= datenbank->anzahl) {
+int bearbeite_datenbankeintrag(Datenbank *datenbank, int eintrags_index) {
+    if (datenbank == NULL || eintrags_index < 0 || eintrags_index >= datenbank->anzahl) {
         return -1;
     }
-    DatenbankEintrag *eintrag = &datenbank->eintraege[index];
+    DatenbankEintrag *eintrag = &datenbank->eintraege[eintrags_index];
     char puffer[DB_MAX_TEXTLAENGE];
     printf("ID (%d): ", eintrag->id);
     lese_zeile(puffer, sizeof puffer);
@@ -292,7 +296,8 @@ int bearbeite_datenbankeintrag(Datenbank *datenbank, int index) {
 
 static int lese_auswahl(const char *hinweis) {
     char puffer[32];
-    for (;;) {
+    int wiederhole_eingabe = 1;
+    while (wiederhole_eingabe == 1) {
         printf("%s", hinweis);
         lese_zeile(puffer, sizeof puffer);
         if (puffer[0] == '\0') {
@@ -304,14 +309,16 @@ static int lese_auswahl(const char *hinweis) {
             return (int)wert;
         }
     }
+    return 0;
 }
 
 void bearbeite_datenbank(Datenbank *datenbank) {
     if (datenbank == NULL) {
         return;
     }
-    int geaendert = 0;
-    for (;;) {
+    int geaenderte_daten_vorhanden = 0;
+    int hauptschleife_aktiv = 1;
+    while (hauptschleife_aktiv == 1) {
         printf("\n=== Datenbank: %s ===\n", datenbank->dateiname);
         printf("[1] Einträge anzeigen\n");
         printf("[2] Eintrag bearbeiten\n");
@@ -335,20 +342,20 @@ void bearbeite_datenbank(Datenbank *datenbank) {
                         break;
                     }
                     if (bearbeite_datenbankeintrag(datenbank, position - 1) == 0) {
-                        geaendert = 1;
+                        geaenderte_daten_vorhanden = 1;
                     }
                 }
                 break;
             case 3:
                 if (speichere_datenbank(datenbank) == 0) {
-                    geaendert = 0;
+                    geaenderte_daten_vorhanden = 0;
                     printf("Gespeichert.\n");
                 } else {
                     printf("Speichern fehlgeschlagen.\n");
                 }
                 break;
             case 4:
-                if (geaendert) {
+                if (geaenderte_daten_vorhanden != 0) {
                     printf("Es gibt ungespeicherte Änderungen. Trotzdem verlassen? (j/n): ");
                     char antwort[8];
                     lese_zeile(antwort, sizeof antwort);
@@ -371,10 +378,14 @@ static int hat_csv_endung(const char *name) {
     if (laenge < 4) {
         return 0;
     }
-    return (tolower((unsigned char)name[laenge - 4]) == '.' &&
-            tolower((unsigned char)name[laenge - 3]) == 'c' &&
-            tolower((unsigned char)name[laenge - 2]) == 's' &&
-            tolower((unsigned char)name[laenge - 1]) == 'v');
+    int hat_punkt = tolower((unsigned char)name[laenge - 4]) == '.';
+    int hat_c = tolower((unsigned char)name[laenge - 3]) == 'c';
+    int hat_s = tolower((unsigned char)name[laenge - 2]) == 's';
+    int hat_v = tolower((unsigned char)name[laenge - 1]) == 'v';
+    if (hat_punkt != 0 && hat_c != 0 && hat_s != 0 && hat_v != 0) {
+        return 1;
+    }
+    return 0;
 }
 
 int liste_csv_dateien(const char *verzeichnis, char dateien[][DB_MAX_DATEINAME], int max_dateien) {
@@ -382,22 +393,29 @@ int liste_csv_dateien(const char *verzeichnis, char dateien[][DB_MAX_DATEINAME],
         return -1;
     }
     DIR *verzeichnis_stream = opendir(verzeichnis);
-    if (!verzeichnis_stream) {
+    if (verzeichnis_stream == NULL) {
         return -1;
     }
     struct dirent *eintrag;
     int anzahl = 0;
-    while ((eintrag = readdir(verzeichnis_stream)) != NULL && anzahl < max_dateien) {
+    while (anzahl < max_dateien) {
+        eintrag = readdir(verzeichnis_stream);
+        if (eintrag == NULL) {
+            break;
+        }
         if (strcmp(eintrag->d_name, ".") == 0 || strcmp(eintrag->d_name, "..") == 0) {
             continue;
         }
-        if (!hat_csv_endung(eintrag->d_name)) {
+        if (hat_csv_endung(eintrag->d_name) == 0) {
             continue;
         }
         char pfad[DB_MAX_DATEINAME];
         snprintf(pfad, sizeof pfad, "%s/%s", verzeichnis, eintrag->d_name);
         struct stat status;
-        if (stat(pfad, &status) == -1 || !S_ISREG(status.st_mode)) {
+        if (stat(pfad, &status) == -1) {
+            continue;
+        }
+        if (S_ISREG(status.st_mode) == 0) {
             continue;
         }
         strncpy(dateien[anzahl], pfad, DB_MAX_DATEINAME - 1);
