@@ -199,6 +199,37 @@ static void url_decode(const char *src, char *dest, size_t dest_size) {
     dest[di] = '\0';
 }
 
+static void copy_and_decode_segment(const char *start,
+                                    size_t length,
+                                    char *decoded,
+                                    size_t decoded_size) {
+    if (decoded_size == 0) {
+        return;
+    }
+    size_t raw_capacity = decoded_size * 3;
+    if (raw_capacity == 0) {
+        decoded[0] = '\0';
+        return;
+    }
+    size_t usable = length;
+    if (usable >= raw_capacity) {
+        usable = raw_capacity - 1;
+    }
+    char raw[raw_capacity];
+    if (usable > 0) {
+        memcpy(raw, start, usable);
+    }
+    raw[usable] = '\0';
+    url_decode(raw, decoded, decoded_size);
+}
+
+static void set_param(Param *param, const char *key, const char *value) {
+    strncpy(param->key, key, MAX_KEY_LEN - 1);
+    param->key[MAX_KEY_LEN - 1] = '\0';
+    strncpy(param->value, value, MAX_VALUE_LEN - 1);
+    param->value[MAX_VALUE_LEN - 1] = '\0';
+}
+
 static int parse_form_params(const char *data, Param *params, int max_params) {
     if (data == NULL) {
         return 0;
@@ -212,37 +243,13 @@ static int parse_form_params(const char *data, Param *params, int max_params) {
         char key_buf[MAX_KEY_LEN];
         char value_buf[MAX_VALUE_LEN];
         if (eq != NULL) {
-            size_t key_len = (size_t)(eq - p);
-            size_t val_len = (size_t)(end - eq - 1);
-            char key_raw[MAX_KEY_LEN * 3];
-            char val_raw[MAX_VALUE_LEN * 3];
-            if (key_len >= sizeof key_raw) {
-                key_len = sizeof key_raw - 1;
-            }
-            if (val_len >= sizeof val_raw) {
-                val_len = sizeof val_raw - 1;
-            }
-            memcpy(key_raw, p, key_len);
-            key_raw[key_len] = '\0';
-            memcpy(val_raw, eq + 1, val_len);
-            val_raw[val_len] = '\0';
-            url_decode(key_raw, key_buf, sizeof key_buf);
-            url_decode(val_raw, value_buf, sizeof value_buf);
+            copy_and_decode_segment(p, (size_t)(eq - p), key_buf, sizeof key_buf);
+            copy_and_decode_segment(eq + 1, (size_t)(end - eq - 1), value_buf, sizeof value_buf);
         } else {
-            char key_raw[MAX_KEY_LEN * 3];
-            size_t key_len = (size_t)(end - p);
-            if (key_len >= sizeof key_raw) {
-                key_len = sizeof key_raw - 1;
-            }
-            memcpy(key_raw, p, key_len);
-            key_raw[key_len] = '\0';
-            url_decode(key_raw, key_buf, sizeof key_buf);
+            copy_and_decode_segment(p, (size_t)(end - p), key_buf, sizeof key_buf);
             value_buf[0] = '\0';
         }
-        strncpy(params[count].key, key_buf, MAX_KEY_LEN - 1);
-        params[count].key[MAX_KEY_LEN - 1] = '\0';
-        strncpy(params[count].value, value_buf, MAX_VALUE_LEN - 1);
-        params[count].value[MAX_VALUE_LEN - 1] = '\0';
+        set_param(&params[count], key_buf, value_buf);
         count++;
         if (amp == NULL) {
             break;
@@ -339,31 +346,31 @@ static int build_static_path(const char *relative, char *out, size_t out_size) {
 }
 
 static const char *content_type_for_path(const char *path) {
+    struct {
+        const char *ext;
+        const char *type;
+    } types[] = {
+        {".html", "text/html; charset=utf-8"},
+        {".css",  "text/css; charset=utf-8"},
+        {".js",   "application/javascript; charset=utf-8"},
+        {".json", "application/json; charset=utf-8"},
+        {".png",  "image/png"},
+        {".jpg",  "image/jpeg"},
+        {".jpeg", "image/jpeg"},
+        {".svg",  "image/svg+xml"},
+    };
+
     const char *ext = strrchr(path, '.');
     if (ext == NULL) {
         return "application/octet-stream";
     }
-    if (strcmp(ext, ".html") == 0) {
-        return "text/html; charset=utf-8";
+
+    for (size_t i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
+        if (strcmp(ext, types[i].ext) == 0) {
+            return types[i].type;
+        }
     }
-    if (strcmp(ext, ".css") == 0) {
-        return "text/css; charset=utf-8";
-    }
-    if (strcmp(ext, ".js") == 0) {
-        return "application/javascript; charset=utf-8";
-    }
-    if (strcmp(ext, ".json") == 0) {
-        return "application/json; charset=utf-8";
-    }
-    if (strcmp(ext, ".png") == 0) {
-        return "image/png";
-    }
-    if (strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0) {
-        return "image/jpeg";
-    }
-    if (strcmp(ext, ".svg") == 0) {
-        return "image/svg+xml";
-    }
+
     return "application/octet-stream";
 }
 
@@ -464,6 +471,25 @@ static int save_shopping_list(char items[SHOPPING_LIST_MAX_ITEMS][SHOPPING_LIST_
     return 0;
 }
 
+static void trim_whitespace_inplace(char *text) {
+    if (text == NULL) {
+        return;
+    }
+
+    size_t len = strlen(text);
+    while (len > 0 && isspace((unsigned char)text[len - 1])) {
+        text[--len] = '\0';
+    }
+
+    size_t start = 0;
+    while (text[start] != '\0' && isspace((unsigned char)text[start])) {
+        start++;
+    }
+    if (start > 0) {
+        memmove(text, text + start, strlen(text + start) + 1);
+    }
+}
+
 static void split_list_entry(const char *line, char *article, size_t article_size, char *provider, size_t provider_size) {
     if (line == NULL) {
         if (article != NULL && article_size > 0) {
@@ -474,8 +500,9 @@ static void split_list_entry(const char *line, char *article, size_t article_siz
         }
         return;
     }
+
     const char *sep = strchr(line, '|');
-    if (sep) {
+    if (sep != NULL) {
         size_t article_len = (size_t)(sep - line);
         if (article_size > 0) {
             if (article_len >= article_size) {
@@ -497,32 +524,9 @@ static void split_list_entry(const char *line, char *article, size_t article_siz
             provider[0] = '\0';
         }
     }
-    if (article != NULL) {
-        size_t len = strlen(article);
-        while (len > 0 && isspace((unsigned char)article[len - 1])) {
-            article[--len] = '\0';
-        }
-        size_t start = 0;
-        while (article[start] != '\0' && isspace((unsigned char)article[start])) {
-            start++;
-        }
-        if (start > 0) {
-            memmove(article, article + start, strlen(article + start) + 1);
-        }
-    }
-    if (provider != NULL) {
-        size_t len = strlen(provider);
-        while (len > 0 && isspace((unsigned char)provider[len - 1])) {
-            provider[--len] = '\0';
-        }
-        size_t start = 0;
-        while (provider[start] != '\0' && isspace((unsigned char)provider[start])) {
-            start++;
-        }
-        if (start > 0) {
-            memmove(provider, provider + start, strlen(provider + start) + 1);
-        }
-    }
+
+    trim_whitespace_inplace(article);
+    trim_whitespace_inplace(provider);
 }
 
 static int unit_normalize(const char *unit, UnitType *type, double *factor) {
@@ -880,6 +884,30 @@ static int parse_double_param(const char *value, double *out) {
     return 0;
 }
 
+static DatabaseEntry *find_entry_by_id(Database *db, int id) {
+    if (db == NULL) {
+        return NULL;
+    }
+    for (int i = 0; i < db->anzahl; i++) {
+        if (db->eintraege[i].id == id) {
+            return &db->eintraege[i];
+        }
+    }
+    return NULL;
+}
+
+static int find_entry_index(const Database *db, int id) {
+    if (db == NULL) {
+        return -1;
+    }
+    for (int i = 0; i < db->anzahl; i++) {
+        if (db->eintraege[i].id == id) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int is_update) {
     const char *name = find_param(req->body_params, req->body_count, "name");
     const char *id_text = find_param(req->body_params, req->body_count, "id");
@@ -924,13 +952,7 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
         send_error(client, "500 Internal Server Error", "Datenbank konnte nicht geladen werden");
         return;
     }
-    DatabaseEntry *entry = NULL;
-    for (int i = 0; i < db.anzahl; i++) {
-        if (db.eintraege[i].id == id) {
-            entry = &db.eintraege[i];
-            break;
-        }
-    }
+    DatabaseEntry *entry = find_entry_by_id(&db, id);
     if (is_update) {
         if (entry == NULL) {
             send_error(client, "404 Not Found", "Eintrag nicht gefunden");
@@ -1002,13 +1024,7 @@ static void handle_db_delete(socket_t client, const HttpRequest *req) {
         send_error(client, "500 Internal Server Error", "Datenbank konnte nicht geladen werden");
         return;
     }
-    int index = -1;
-    for (int i = 0; i < db.anzahl; i++) {
-        if (db.eintraege[i].id == id) {
-            index = i;
-            break;
-        }
-    }
+    int index = find_entry_index(&db, id);
     if (index < 0) {
         send_error(client, "404 Not Found", "Eintrag nicht gefunden");
         return;
@@ -1179,16 +1195,8 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
         send_error(client, "500 Internal Server Error", "Datenbank konnte nicht geladen werden");
         return;
     }
-    DatabaseEntry *first = NULL;
-    DatabaseEntry *second = NULL;
-    for (int i = 0; i < db.anzahl; i++) {
-        if (db.eintraege[i].id == first_id) {
-            first = &db.eintraege[i];
-        }
-        if (db.eintraege[i].id == second_id) {
-            second = &db.eintraege[i];
-        }
-    }
+    DatabaseEntry *first = find_entry_by_id(&db, first_id);
+    DatabaseEntry *second = find_entry_by_id(&db, second_id);
     if (first == NULL || second == NULL) {
         send_error(client, "404 Not Found", "Eintrag nicht gefunden");
         return;
