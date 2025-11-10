@@ -303,8 +303,9 @@ static const char *content_type_for_path(const char *path) {
     return "application/octet-stream";
 }
 
-static void send_response(socket_t client, const char *status, const char *content_type, const char *body, size_t body_len) {
-    char header[512];
+static void send_response_with_headers(socket_t client, const char *status, const char *content_type, const char *body, size_t body_len, const char *extra_headers) {
+    const char *extra = extra_headers ? extra_headers : "";
+    char header[768];
     int header_len = snprintf(header, sizeof header,
                               "HTTP/1.1 %s\r\n"
                               "Content-Type: %s\r\n"
@@ -313,14 +314,19 @@ static void send_response(socket_t client, const char *status, const char *conte
                               "Access-Control-Allow-Origin: *\r\n"
                               "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
                               "Access-Control-Allow-Headers: Content-Type\r\n"
+                              "%s"
                               "\r\n",
-                              status, content_type, body_len);
+                              status, content_type, body_len, extra);
     if (header_len > 0) {
         send(client, header, header_len, 0);
     }
     if (body_len > 0 && body) {
         send(client, body, (int)body_len, 0);
     }
+}
+
+static void send_response(socket_t client, const char *status, const char *content_type, const char *body, size_t body_len) {
+    send_response_with_headers(client, status, content_type, body, body_len, NULL);
 }
 
 static void send_empty_response(socket_t client, const char *status) {
@@ -906,6 +912,26 @@ static void handle_list_get(socket_t client) {
     buffer_free(&buf);
 }
 
+static void handle_list_download(socket_t client) {
+    char items[SHOPPING_LIST_MAX_ITEMS][SHOPPING_LIST_MAX_LEN];
+    int count = load_shopping_list(items);
+    Buffer buf;
+    if (buffer_init(&buf) != 0) {
+        send_error(client, "500 Internal Server Error", "Speicherfehler");
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        if (buffer_append_str(&buf, items[i]) != 0 || buffer_append_char(&buf, '\n') != 0) {
+            buffer_free(&buf);
+            send_error(client, "500 Internal Server Error", "Speicherfehler");
+            return;
+        }
+    }
+    const char *disposition = "Content-Disposition: attachment; filename=\"einkaufsliste.txt\"\r\n";
+    send_response_with_headers(client, "200 OK", "text/plain; charset=utf-8", buf.data, buf.len, disposition);
+    buffer_free(&buf);
+}
+
 static void build_list_entry(const char *artikel, const char *anbieter, char *out, size_t out_size) {
     if (anbieter && *anbieter) {
         snprintf(out, out_size, "%s|%s", artikel, anbieter);
@@ -1210,6 +1236,10 @@ static void route_request(socket_t client, HttpRequest *req) {
         }
         if (strcmp(req->path, "/api/db") == 0) {
             handle_db_get(client, req);
+            return;
+        }
+        if (strcmp(req->path, "/api/list/download") == 0) {
+            handle_list_download(client);
             return;
         }
         if (strcmp(req->path, "/api/list") == 0) {
