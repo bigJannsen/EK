@@ -88,7 +88,9 @@ typedef struct {
 
 static int buffer_init(Buffer *buf) {
     buf->data = (char *)malloc(1024);
-    if (!buf->data) return -1;
+    if (buf->data == NULL) {
+        return -1;
+    }
     buf->len = 0;
     buf->cap = 1024;
     buf->data[0] = '\0';
@@ -96,20 +98,26 @@ static int buffer_init(Buffer *buf) {
 }
 
 static int buffer_reserve(Buffer *buf, size_t needed) {
-    if (buf->len + needed < buf->cap) return 0;
+    if (buf->len + needed < buf->cap) {
+        return 0;
+    }
     size_t new_cap = buf->cap;
     while (new_cap < buf->len + needed + 1) {
         new_cap *= 2;
     }
     char *new_data = (char *)realloc(buf->data, new_cap);
-    if (!new_data) return -1;
+    if (new_data == NULL) {
+        return -1;
+    }
     buf->data = new_data;
     buf->cap = new_cap;
     return 0;
 }
 
 static int buffer_append(Buffer *buf, const char *data, size_t data_len) {
-    if (buffer_reserve(buf, data_len) != 0) return -1;
+    if (buffer_reserve(buf, data_len) != 0) {
+        return -1;
+    }
     memcpy(buf->data + buf->len, data, data_len);
     buf->len += data_len;
     buf->data[buf->len] = '\0';
@@ -130,11 +138,15 @@ static int buffer_append_format(Buffer *buf, const char *fmt, ...) {
     char temp[512];
     int written = vsnprintf(temp, sizeof temp, fmt, args);
     va_end(args);
-    if (written < 0) return -1;
+    if (written < 0) {
+        return -1;
+    }
     if ((size_t)written >= sizeof temp) {
         size_t needed = (size_t)written + 1;
         char *dynamic = (char *)malloc(needed);
-        if (!dynamic) return -1;
+        if (dynamic == NULL) {
+            return -1;
+        }
         va_start(args, fmt);
         vsnprintf(dynamic, needed, fmt, args);
         va_end(args);
@@ -153,16 +165,22 @@ static void buffer_free(Buffer *buf) {
 }
 
 static int hex_value(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
     return -1;
 }
 
 static void url_decode(const char *src, char *dest, size_t dest_size) {
     size_t di = 0;
     for (size_t i = 0; src[i] && di + 1 < dest_size; ) {
-        if (src[i] == '%' && src[i + 1] && src[i + 2]) {
+        if (src[i] == '%' && src[i + 1] != '\0' && src[i + 2] != '\0') {
             int h1 = hex_value(src[i + 1]);
             int h2 = hex_value(src[i + 2]);
             if (h1 >= 0 && h2 >= 0) {
@@ -182,7 +200,9 @@ static void url_decode(const char *src, char *dest, size_t dest_size) {
 }
 
 static int parse_form_params(const char *data, Param *params, int max_params) {
-    if (!data) return 0;
+    if (data == NULL) {
+        return 0;
+    }
     int count = 0;
     const char *p = data;
     while (*p && count < max_params) {
@@ -191,13 +211,17 @@ static int parse_form_params(const char *data, Param *params, int max_params) {
         const char *eq = memchr(p, '=', (size_t)(end - p));
         char key_buf[MAX_KEY_LEN];
         char value_buf[MAX_VALUE_LEN];
-        if (eq) {
+        if (eq != NULL) {
             size_t key_len = (size_t)(eq - p);
             size_t val_len = (size_t)(end - eq - 1);
             char key_raw[MAX_KEY_LEN * 3];
             char val_raw[MAX_VALUE_LEN * 3];
-            if (key_len >= sizeof key_raw) key_len = sizeof key_raw - 1;
-            if (val_len >= sizeof val_raw) val_len = sizeof val_raw - 1;
+            if (key_len >= sizeof key_raw) {
+                key_len = sizeof key_raw - 1;
+            }
+            if (val_len >= sizeof val_raw) {
+                val_len = sizeof val_raw - 1;
+            }
             memcpy(key_raw, p, key_len);
             key_raw[key_len] = '\0';
             memcpy(val_raw, eq + 1, val_len);
@@ -207,7 +231,9 @@ static int parse_form_params(const char *data, Param *params, int max_params) {
         } else {
             char key_raw[MAX_KEY_LEN * 3];
             size_t key_len = (size_t)(end - p);
-            if (key_len >= sizeof key_raw) key_len = sizeof key_raw - 1;
+            if (key_len >= sizeof key_raw) {
+                key_len = sizeof key_raw - 1;
+            }
             memcpy(key_raw, p, key_len);
             key_raw[key_len] = '\0';
             url_decode(key_raw, key_buf, sizeof key_buf);
@@ -218,7 +244,9 @@ static int parse_form_params(const char *data, Param *params, int max_params) {
         strncpy(params[count].value, value_buf, MAX_VALUE_LEN - 1);
         params[count].value[MAX_VALUE_LEN - 1] = '\0';
         count++;
-        if (!amp) break;
+        if (amp == NULL) {
+            break;
+        }
         p = amp + 1;
     }
     return count;
@@ -235,8 +263,12 @@ static const char *find_param(const Param *params, int count, const char *key) {
 
 static int case_insensitive_prefix(const char *text, const char *prefix) {
     while (*prefix) {
-        if (*text == '\0') return 0;
-        if (tolower((unsigned char)*text) != tolower((unsigned char)*prefix)) return 0;
+        if (*text == '\0') {
+            return 0;
+        }
+        if (tolower((unsigned char)*text) != tolower((unsigned char)*prefix)) {
+            return 0;
+        }
         text++;
         prefix++;
     }
@@ -269,37 +301,69 @@ static const char *basename_of(const char *path) {
     const char *slash = strrchr(path, '/');
 #ifdef _WIN32
     const char *backslash = strrchr(path, '\\');
-    if (!slash || (backslash && backslash > slash)) slash = backslash;
+    if (slash == NULL || (backslash != NULL && backslash > slash)) {
+        slash = backslash;
+    }
 #endif
     return slash ? slash + 1 : path;
 }
 
 static int contains_path_traversal(const char *path) {
-    if (!path) return 1;
-    if (strstr(path, "..")) return 1;
-    if (strstr(path, "\\")) return 1;
+    if (path == NULL) {
+        return 1;
+    }
+    if (strstr(path, "..") != NULL) {
+        return 1;
+    }
+    if (strstr(path, "\\") != NULL) {
+        return 1;
+    }
     return 0;
 }
 
 static int build_static_path(const char *relative, char *out, size_t out_size) {
-    if (!relative || contains_path_traversal(relative)) return -1;
-    while (*relative == '/') relative++;
-    if (*relative == '\0') relative = "index.html";
+    if (relative == NULL || contains_path_traversal(relative)) {
+        return -1;
+    }
+    while (*relative == '/') {
+        relative++;
+    }
+    if (*relative == '\0') {
+        relative = "index.html";
+    }
     int written = snprintf(out, out_size, "%s/%s", WEB_DIRECTORY, relative);
-    if (written < 0 || (size_t)written >= out_size) return -1;
+    if (written < 0 || (size_t)written >= out_size) {
+        return -1;
+    }
     return 0;
 }
 
 static const char *content_type_for_path(const char *path) {
     const char *ext = strrchr(path, '.');
-    if (!ext) return "application/octet-stream";
-    if (strcmp(ext, ".html") == 0) return "text/html; charset=utf-8";
-    if (strcmp(ext, ".css") == 0) return "text/css; charset=utf-8";
-    if (strcmp(ext, ".js") == 0) return "application/javascript; charset=utf-8";
-    if (strcmp(ext, ".json") == 0) return "application/json; charset=utf-8";
-    if (strcmp(ext, ".png") == 0) return "image/png";
-    if (strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0) return "image/jpeg";
-    if (strcmp(ext, ".svg") == 0) return "image/svg+xml";
+    if (ext == NULL) {
+        return "application/octet-stream";
+    }
+    if (strcmp(ext, ".html") == 0) {
+        return "text/html; charset=utf-8";
+    }
+    if (strcmp(ext, ".css") == 0) {
+        return "text/css; charset=utf-8";
+    }
+    if (strcmp(ext, ".js") == 0) {
+        return "application/javascript; charset=utf-8";
+    }
+    if (strcmp(ext, ".json") == 0) {
+        return "application/json; charset=utf-8";
+    }
+    if (strcmp(ext, ".png") == 0) {
+        return "image/png";
+    }
+    if (strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0) {
+        return "image/jpeg";
+    }
+    if (strcmp(ext, ".svg") == 0) {
+        return "image/svg+xml";
+    }
     return "application/octet-stream";
 }
 
@@ -355,10 +419,14 @@ static void send_error(socket_t client, const char *status, const char *message)
 }
 
 static int resolve_database_path(const char *name, char *out, size_t out_size) {
-    if (!name || !*name) return -1;
+    if (name == NULL || *name == '\0') {
+        return -1;
+    }
     char files[MAX_DB_FILES][DB_MAX_FILENAME];
     int count = list_csv_files(DATA_DIRECTORY, files, MAX_DB_FILES);
-    if (count <= 0) return -1;
+    if (count <= 0) {
+        return -1;
+    }
     for (int i = 0; i < count; i++) {
         const char *base = basename_of(files[i]);
         if (strcmp(base, name) == 0) {
@@ -372,7 +440,9 @@ static int resolve_database_path(const char *name, char *out, size_t out_size) {
 
 static int load_shopping_list(char items[SHOPPING_LIST_MAX_ITEMS][SHOPPING_LIST_MAX_LEN]) {
     FILE *file = fopen(SHOPPING_LIST_PATH, "r");
-    if (!file) return 0;
+    if (file == NULL) {
+        return 0;
+    }
     int count = 0;
     while (count < SHOPPING_LIST_MAX_ITEMS && fgets(items[count], SHOPPING_LIST_MAX_LEN, file)) {
         items[count][strcspn(items[count], "\r\n")] = '\0';
@@ -384,7 +454,9 @@ static int load_shopping_list(char items[SHOPPING_LIST_MAX_ITEMS][SHOPPING_LIST_
 
 static int save_shopping_list(char items[SHOPPING_LIST_MAX_ITEMS][SHOPPING_LIST_MAX_LEN], int count) {
     FILE *file = fopen(SHOPPING_LIST_PATH, "w");
-    if (!file) return -1;
+    if (file == NULL) {
+        return -1;
+    }
     for (int i = 0; i < count; i++) {
         fprintf(file, "%s\n", items[i]);
     }
@@ -393,16 +465,22 @@ static int save_shopping_list(char items[SHOPPING_LIST_MAX_ITEMS][SHOPPING_LIST_
 }
 
 static void split_list_entry(const char *line, char *article, size_t article_size, char *provider, size_t provider_size) {
-    if (!line) {
-        if (article && article_size) article[0] = '\0';
-        if (provider && provider_size) provider[0] = '\0';
+    if (line == NULL) {
+        if (article != NULL && article_size > 0) {
+            article[0] = '\0';
+        }
+        if (provider != NULL && provider_size > 0) {
+            provider[0] = '\0';
+        }
         return;
     }
     const char *sep = strchr(line, '|');
     if (sep) {
         size_t article_len = (size_t)(sep - line);
         if (article_size > 0) {
-            if (article_len >= article_size) article_len = article_size - 1;
+            if (article_len >= article_size) {
+                article_len = article_size - 1;
+            }
             memcpy(article, line, article_len);
             article[article_len] = '\0';
         }
@@ -415,26 +493,42 @@ static void split_list_entry(const char *line, char *article, size_t article_siz
             strncpy(article, line, article_size - 1);
             article[article_size - 1] = '\0';
         }
-        if (provider_size > 0) provider[0] = '\0';
+        if (provider_size > 0) {
+            provider[0] = '\0';
+        }
     }
-    if (article) {
+    if (article != NULL) {
         size_t len = strlen(article);
-        while (len > 0 && isspace((unsigned char)article[len - 1])) article[--len] = '\0';
+        while (len > 0 && isspace((unsigned char)article[len - 1])) {
+            article[--len] = '\0';
+        }
         size_t start = 0;
-        while (article[start] && isspace((unsigned char)article[start])) start++;
-        if (start > 0) memmove(article, article + start, strlen(article + start) + 1);
+        while (article[start] != '\0' && isspace((unsigned char)article[start])) {
+            start++;
+        }
+        if (start > 0) {
+            memmove(article, article + start, strlen(article + start) + 1);
+        }
     }
-    if (provider) {
+    if (provider != NULL) {
         size_t len = strlen(provider);
-        while (len > 0 && isspace((unsigned char)provider[len - 1])) provider[--len] = '\0';
+        while (len > 0 && isspace((unsigned char)provider[len - 1])) {
+            provider[--len] = '\0';
+        }
         size_t start = 0;
-        while (provider[start] && isspace((unsigned char)provider[start])) start++;
-        if (start > 0) memmove(provider, provider + start, strlen(provider + start) + 1);
+        while (provider[start] != '\0' && isspace((unsigned char)provider[start])) {
+            start++;
+        }
+        if (start > 0) {
+            memmove(provider, provider + start, strlen(provider + start) + 1);
+        }
     }
 }
 
 static int unit_normalize(const char *unit, UnitType *type, double *factor) {
-    if (!unit || !type || !factor) return -1;
+    if (unit == NULL || type == NULL || factor == NULL) {
+        return -1;
+    }
     if (strcmp(unit, "g") == 0) {
         *type = UNIT_GRAM;
         *factor = 1.0;
@@ -464,11 +558,17 @@ static int unit_normalize(const char *unit, UnitType *type, double *factor) {
 }
 
 static int entry_to_quantity(const DatabaseEntry *entry, Quantity *quantity) {
-    if (!entry || !quantity) return -1;
-    if (entry->menge_wert <= 0.0) return -1;
+    if (entry == NULL || quantity == NULL) {
+        return -1;
+    }
+    if (entry->menge_wert <= 0.0) {
+        return -1;
+    }
     UnitType type = UNIT_UNKNOWN;
     double factor = 0.0;
-    if (unit_normalize(entry->menge_einheit, &type, &factor) != 0) return -1;
+    if (unit_normalize(entry->menge_einheit, &type, &factor) != 0) {
+        return -1;
+    }
     quantity->amount = entry->menge_wert * factor;
     quantity->type = type;
     return 0;
@@ -496,9 +596,13 @@ static int parse_http_request(char *buffer, size_t length, HttpRequest *req) {
     (void)length;
     memset(req, 0, sizeof *req);
     char *header_end = strstr(buffer, "\r\n\r\n");
-    if (!header_end) return -1;
+    if (header_end == NULL) {
+        return -1;
+    }
     char *line_end = strstr(buffer, "\r\n");
-    if (!line_end) return -1;
+    if (line_end == NULL) {
+        return -1;
+    }
     *line_end = '\0';
     char target[512];
     char version[32];
@@ -506,7 +610,7 @@ static int parse_http_request(char *buffer, size_t length, HttpRequest *req) {
         return -1;
     }
     char *query = strchr(target, '?');
-    if (query) {
+    if (query != NULL) {
         *query = '\0';
         strncpy(req->query, query + 1, sizeof req->query - 1);
         req->query[sizeof req->query - 1] = '\0';
@@ -516,13 +620,17 @@ static int parse_http_request(char *buffer, size_t length, HttpRequest *req) {
     char *headers = line_end + 2;
     while (headers < header_end) {
         char *next = strstr(headers, "\r\n");
-        if (!next || headers == next) break;
+        if (next == NULL || headers == next) {
+            break;
+        }
         *next = '\0';
         char *colon = strchr(headers, ':');
-        if (colon) {
+        if (colon != NULL) {
             *colon = '\0';
             char *value = colon + 1;
-            while (*value && isspace((unsigned char)*value)) value++;
+            while (*value != '\0' && isspace((unsigned char)*value)) {
+                value++;
+            }
             if (case_insensitive_prefix(headers, "Content-Type")) {
                 strncpy(req->content_type, value, sizeof req->content_type - 1);
                 req->content_type[sizeof req->content_type - 1] = '\0';
@@ -555,9 +663,9 @@ static int read_http_request(socket_t client, char *buffer, size_t buffer_size, 
         }
         total += (size_t)received;
         buffer[total] = '\0';
-        if (!headers_parsed) {
+        if (headers_parsed == 0) {
             char *header_end = strstr(buffer, "\r\n\r\n");
-            if (header_end) {
+            if (header_end != NULL) {
                 headers_parsed = 1;
                 header_len = (size_t)(header_end + 4 - buffer);
                 char headers_copy[4096];
@@ -565,41 +673,59 @@ static int read_http_request(socket_t client, char *buffer, size_t buffer_size, 
                 memcpy(headers_copy, buffer, copy_len);
                 headers_copy[copy_len] = '\0';
                 char *line = strstr(headers_copy, "\r\n");
-                if (line) line += 2;
-                while (line && *line) {
+                if (line != NULL) {
+                    line += 2;
+                }
+                while (line != NULL && *line != '\0') {
                     char *next = strstr(line, "\r\n");
-                    if (!next) break;
-                    if (line == next) break;
+                    if (next == NULL) {
+                        break;
+                    }
+                    if (line == next) {
+                        break;
+                    }
                     *next = '\0';
                     char *colon = strchr(line, ':');
-                    if (colon) {
+                    if (colon != NULL) {
                         *colon = '\0';
                         char *value = colon + 1;
-                        while (*value && isspace((unsigned char)*value)) value++;
+                        while (*value != '\0' && isspace((unsigned char)*value)) {
+                            value++;
+                        }
                         if (case_insensitive_prefix(line, "Content-Length")) {
                             expected_body = (size_t)strtoul(value, NULL, 10);
                         }
                     }
                     line = next + 2;
                 }
-                if (expected_body == 0) break;
+                if (expected_body == 0) {
+                    break;
+                }
                 size_t have_body = total > header_len ? total - header_len : 0;
-                if (have_body >= expected_body) break;
+                if (have_body >= expected_body) {
+                    break;
+                }
             }
         } else {
             size_t have_body = total > header_len ? total - header_len : 0;
-            if (have_body >= expected_body) break;
+            if (have_body >= expected_body) {
+                break;
+            }
         }
     }
-    if (!headers_parsed) return -1;
-    if (out_len) *out_len = total;
+    if (headers_parsed == 0) {
+        return -1;
+    }
+    if (out_len != NULL) {
+        *out_len = total;
+    }
     buffer[total] = '\0';
     return 0;
 }
 
 static void send_file_response(socket_t client, const char *path) {
     FILE *file = fopen(path, "rb");
-    if (!file) {
+    if (file == NULL) {
         send_error(client, "404 Not Found", "Datei nicht gefunden");
         return;
     }
@@ -616,7 +742,7 @@ static void send_file_response(socket_t client, const char *path) {
     }
     rewind(file);
     char *data = (char *)malloc((size_t)size);
-    if (!data) {
+    if (data == NULL) {
         fclose(file);
         send_error(client, "500 Internal Server Error", "Speicherfehler");
         return;
@@ -661,7 +787,9 @@ static void handle_db_files(socket_t client) {
     }
     buffer_append_str(&buf, "{\"files\":[");
     for (int i = 0; i < count; i++) {
-        if (i > 0) buffer_append_char(&buf, ',');
+        if (i > 0) {
+            buffer_append_char(&buf, ',');
+        }
         buffer_append_str(&buf, "{\"name\":");
         append_json_string(&buf, basename_of(files[i]));
         buffer_append_char(&buf, '}');
@@ -673,7 +801,7 @@ static void handle_db_files(socket_t client) {
 
 static void handle_db_get(socket_t client, const HttpRequest *req) {
     const char *name = find_param(req->query_params, req->query_count, "name");
-    if (!name || !*name) {
+    if (name == NULL || *name == '\0') {
         send_error(client, "400 Bad Request", "Parameter 'name' fehlt");
         return;
     }
@@ -696,7 +824,9 @@ static void handle_db_get(socket_t client, const HttpRequest *req) {
     append_json_string(&buf, name);
     buffer_append_str(&buf, ",\"entries\":[");
     for (int i = 0; i < db.anzahl; i++) {
-        if (i > 0) buffer_append_char(&buf, ',');
+        if (i > 0) {
+            buffer_append_char(&buf, ',');
+        }
         DatabaseEntry *entry = &db.eintraege[i];
         buffer_append_str(&buf, "{\"id\":");
         buffer_append_format(&buf, "%d", entry->id);
@@ -717,25 +847,35 @@ static void handle_db_get(socket_t client, const HttpRequest *req) {
 }
 
 static int parse_int_param(const char *value, int *out) {
-    if (!value) return -1;
+    if (value == NULL) {
+        return -1;
+    }
     char *end = NULL;
     long v = strtol(value, &end, 10);
-    if (!end || *end != '\0') return -1;
+    if (end == NULL || *end != '\0') {
+        return -1;
+    }
     *out = (int)v;
     return 0;
 }
 
 static int parse_double_param(const char *value, double *out) {
-    if (!value) return -1;
+    if (value == NULL) {
+        return -1;
+    }
     char buffer[64];
     strncpy(buffer, value, sizeof buffer - 1);
     buffer[sizeof buffer - 1] = '\0';
     for (char *c = buffer; *c; ++c) {
-        if (*c == ',') *c = '.';
+        if (*c == ',') {
+            *c = '.';
+        }
     }
     char *end = NULL;
     double v = strtod(buffer, &end);
-    if (!end || *end != '\0') return -1;
+    if (end == NULL || *end != '\0') {
+        return -1;
+    }
     *out = v;
     return 0;
 }
@@ -748,7 +888,8 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
     const char *preis_text = find_param(req->body_params, req->body_count, "preisCent");
     const char *menge_wert_text = find_param(req->body_params, req->body_count, "mengeWert");
     const char *menge_einheit_text = find_param(req->body_params, req->body_count, "mengeEinheit");
-    if (!name || !id_text || !artikel || !anbieter || !preis_text || !menge_wert_text || !menge_einheit_text) {
+    if (name == NULL || id_text == NULL || artikel == NULL || anbieter == NULL || preis_text == NULL ||
+        menge_wert_text == NULL || menge_einheit_text == NULL) {
         send_error(client, "400 Bad Request", "Parameter fehlen");
         return;
     }
@@ -791,7 +932,7 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
         }
     }
     if (is_update) {
-        if (!entry) {
+        if (entry == NULL) {
             send_error(client, "404 Not Found", "Eintrag nicht gefunden");
             return;
         }
@@ -842,7 +983,7 @@ static void handle_db_add_or_update(socket_t client, const HttpRequest *req, int
 static void handle_db_delete(socket_t client, const HttpRequest *req) {
     const char *name = find_param(req->body_params, req->body_count, "name");
     const char *id_text = find_param(req->body_params, req->body_count, "id");
-    if (!name || !id_text) {
+    if (name == NULL || id_text == NULL) {
         send_error(client, "400 Bad Request", "Parameter fehlen");
         return;
     }
@@ -893,7 +1034,9 @@ static void handle_list_get(socket_t client) {
     }
     buffer_append_str(&buf, "{\"items\":[");
     for (int i = 0; i < count; i++) {
-        if (i > 0) buffer_append_char(&buf, ',');
+        if (i > 0) {
+            buffer_append_char(&buf, ',');
+        }
         char article[DB_MAX_TEXT];
         char provider[DB_MAX_TEXT];
         split_list_entry(items[i], article, sizeof article, provider, sizeof provider);
@@ -933,7 +1076,7 @@ static void handle_list_download(socket_t client) {
 }
 
 static void build_list_entry(const char *artikel, const char *anbieter, char *out, size_t out_size) {
-    if (anbieter && *anbieter) {
+    if (anbieter != NULL && *anbieter != '\0') {
         snprintf(out, out_size, "%s|%s", artikel, anbieter);
     } else {
         snprintf(out, out_size, "%s", artikel);
@@ -945,14 +1088,14 @@ static void handle_list_add_or_update(socket_t client, const HttpRequest *req, i
     const char *artikel = find_param(req->body_params, req->body_count, "artikel");
     const char *anbieter = find_param(req->body_params, req->body_count, "anbieter");
     const char *index_text = find_param(req->body_params, req->body_count, "index");
-    if (!artikel || !*artikel) {
+    if (artikel == NULL || *artikel == '\0') {
         send_error(client, "400 Bad Request", "Artikel fehlt");
         return;
     }
     char items[SHOPPING_LIST_MAX_ITEMS][SHOPPING_LIST_MAX_LEN];
     int count = load_shopping_list(items);
     if (is_update) {
-        if (!index_text) {
+        if (index_text == NULL) {
             send_error(client, "400 Bad Request", "Index fehlt");
             return;
         }
@@ -979,7 +1122,7 @@ static void handle_list_add_or_update(socket_t client, const HttpRequest *req, i
 
 static void handle_list_delete(socket_t client, const HttpRequest *req) {
     const char *index_text = find_param(req->body_params, req->body_count, "index");
-    if (!index_text) {
+    if (index_text == NULL) {
         send_error(client, "400 Bad Request", "Index fehlt");
         return;
     }
@@ -1011,7 +1154,7 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
     const char *first_id_text = find_param(req->body_params, req->body_count, "firstId");
     const char *second_id_text = find_param(req->body_params, req->body_count, "secondId");
     const char *amount_text = find_param(req->body_params, req->body_count, "amount");
-    if (!name || !first_id_text || !second_id_text || !amount_text) {
+    if (name == NULL || first_id_text == NULL || second_id_text == NULL || amount_text == NULL) {
         send_error(client, "400 Bad Request", "Parameter fehlen");
         return;
     }
@@ -1039,10 +1182,14 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
     DatabaseEntry *first = NULL;
     DatabaseEntry *second = NULL;
     for (int i = 0; i < db.anzahl; i++) {
-        if (db.eintraege[i].id == first_id) first = &db.eintraege[i];
-        if (db.eintraege[i].id == second_id) second = &db.eintraege[i];
+        if (db.eintraege[i].id == first_id) {
+            first = &db.eintraege[i];
+        }
+        if (db.eintraege[i].id == second_id) {
+            second = &db.eintraege[i];
+        }
     }
-    if (!first || !second) {
+    if (first == NULL || second == NULL) {
         send_error(client, "404 Not Found", "Eintrag nicht gefunden");
         return;
     }
@@ -1063,8 +1210,11 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
     const char *unit = unit_label(qty_first.type);
     const double epsilon = 1e-6;
     const char *cheaper = "equal";
-    if (unit_price_first + epsilon < unit_price_second) cheaper = "first";
-    else if (unit_price_second + epsilon < unit_price_first) cheaper = "second";
+    if (unit_price_first + epsilon < unit_price_second) {
+        cheaper = "first";
+    } else if (unit_price_second + epsilon < unit_price_first) {
+        cheaper = "second";
+    }
     Buffer buf;
     if (buffer_init(&buf) != 0) {
         send_error(client, "500 Internal Server Error", "Speicherfehler");
@@ -1112,8 +1262,8 @@ static void handle_compare_single(socket_t client, const HttpRequest *req) {
 static void handle_compare_list(socket_t client, const HttpRequest *req) {
     const char *name = find_param(req->body_params, req->body_count, "name");
     const char *apply_text = find_param(req->body_params, req->body_count, "apply");
-    int apply = (apply_text && strcmp(apply_text, "1") == 0) ? 1 : 0;
-    if (!name || !*name) {
+    int apply = (apply_text != NULL && strcmp(apply_text, "1") == 0) ? 1 : 0;
+    if (name == NULL || *name == '\0') {
         send_error(client, "400 Bad Request", "Parameter 'name' fehlt");
         return;
     }
@@ -1139,7 +1289,9 @@ static void handle_compare_list(socket_t client, const HttpRequest *req) {
     buffer_append_str(&buf, ",\"items\":[");
     int changed = 0;
     for (int i = 0; i < count; i++) {
-        if (i > 0) buffer_append_char(&buf, ',');
+        if (i > 0) {
+            buffer_append_char(&buf, ',');
+        }
         char article[DB_MAX_TEXT];
         char provider[DB_MAX_TEXT];
         split_list_entry(items[i], article, sizeof article, provider, sizeof provider);
@@ -1156,7 +1308,9 @@ static void handle_compare_list(socket_t client, const HttpRequest *req) {
         int best_pack_price = 0;
         for (int j = 0; j < db.anzahl; j++) {
             DatabaseEntry *entry = &db.eintraege[j];
-            if (strcmp(entry->artikel, article) != 0) continue;
+            if (strcmp(entry->artikel, article) != 0) {
+                continue;
+            }
             matches++;
             Quantity qty;
             int has_qty = 0;
@@ -1165,15 +1319,15 @@ static void handle_compare_list(socket_t client, const HttpRequest *req) {
                 has_qty = 1;
                 unit_price = (double)entry->preis_ct / qty.amount;
             }
-            if (has_qty) {
-                if (!best_has_qty || unit_price + 1e-6 < best_unit_price) {
+            if (has_qty != 0) {
+                if (best_has_qty == 0 || unit_price + 1e-6 < best_unit_price) {
                     best_idx = j;
                     best_has_qty = 1;
                     best_unit_price = unit_price;
                     best_pack_price = entry->preis_ct;
                 }
             } else {
-                if (best_idx == -1 || (!best_has_qty && entry->preis_ct < best_pack_price)) {
+                if (best_idx == -1 || (best_has_qty == 0 && entry->preis_ct < best_pack_price)) {
                     best_idx = j;
                     best_pack_price = entry->preis_ct;
                 }
@@ -1197,7 +1351,7 @@ static void handle_compare_list(socket_t client, const HttpRequest *req) {
                 append_json_string(&buf, unit_label(best_qty.type));
             }
             buffer_append_char(&buf, '}');
-            if (apply && strcmp(provider, best->anbieter) != 0) {
+            if (apply != 0 && strcmp(provider, best->anbieter) != 0) {
                 changed = 1;
                 build_list_entry(best->artikel, best->anbieter, items[i], sizeof items[i]);
             }
@@ -1205,7 +1359,7 @@ static void handle_compare_list(socket_t client, const HttpRequest *req) {
         buffer_append_char(&buf, '}');
     }
     buffer_append_str(&buf, "]}");
-    if (apply && changed) {
+    if (apply != 0 && changed != 0) {
         save_shopping_list(items, count);
     }
     send_json_response(client, "200 OK", buf.data, buf.len);
