@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "web_server.h"
 
+// Alen
+//Startet den Serverprozess für die Anwendung
+//Ruft die HTTP Startfunktion auf ohne weitere Logik
 int main(void) {
     return run_server();
 }

@@ -10,6 +10,9 @@
 #define MAX_DATEIEN 128
 
 // --- Hilfsfunktion: Bildschirm löschen ---
+// Robin
+//Löscht den Konsoleninhalt plattformabhängig
+//Sorgt für eine aufgeräumte Darstellung zwischen Menüs
 static void loesche_bildschirm() {
 #ifdef _WIN32
     system("cls");
@@ -19,6 +22,9 @@ static void loesche_bildschirm() {
 }
 
 // --- Liest vorhandene Liste ein ---
+// Robin
+//Liest die vorhandene Einkaufsliste aus einer Datei in ein Array
+//Entfernt Zeilenumbrüche und zählt die vorhandenen Einträge
 static int lade_liste(const char *dateiname, char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN]) {
     FILE *datei = fopen(dateiname, "r");
     int anzahl = 0;
@@ -37,6 +43,9 @@ static int lade_liste(const char *dateiname, char eintraege[MAX_LISTENEINTRAEGE]
 }
 
 // --- Speichert Liste ---
+// Robin
+//Schreibt alle Listenelemente in die angegebene Datei
+//Ersetzt den vorherigen Inhalt vollständig durch die aktuelle Liste
 static void speichere_liste(const char *dateiname, char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], int anzahl) {
     FILE *datei = fopen(dateiname, "w");
     if (!datei) {
@@ -51,6 +60,9 @@ static void speichere_liste(const char *dateiname, char eintraege[MAX_LISTENEINT
 }
 
 // --- Zeigt Liste an ---
+// Robin
+//Stellt die aktuellen Listeneinträge übersichtlich in der Konsole dar
+//Bereitet Artikel und Anbieter getrennt auf falls verfügbar
 static void zeige_liste(char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], int anzahl) {
     printf("=========================================\n");
     printf("          Aktuelle Einkaufsliste\n");
@@ -77,12 +89,18 @@ static void zeige_liste(char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], int an
 }
 
 // --- Artikel hinzufügen ---
+// Robin
+//Leert verbleibende Zeichen im Eingabepuffer nach einer scanf Abfrage
+//Verhindert dass Restzeichen nachfolgende Eingaben stören
 static void leere_eingabe(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF) {
     }
 }
 
+// Robin
+//Ermittelt den Dateinamen ohne Pfadanteile plattformübergreifend
+//Wird genutzt um Dateilisten benutzerfreundlich anzuzeigen
 static const char *basisname_von(const char *pfad) {
     const char *schraegstrich = strrchr(pfad, '/');
 #ifdef _WIN32
@@ -93,6 +111,9 @@ static const char *basisname_von(const char *pfad) {
     return schraegstrich + 1;
 }
 
+// Robin
+//Zeigt verfügbare Datenbanken an und lädt die gewählte Datei
+//Validiert die Auswahl und fordert bei Fehlern zur Wiederholung auf
 static int waehle_datenbank(Datenbank *datenbank) {
     char dateien[MAX_DATEIEN][DB_MAX_DATEINAME];
     int anzahl = liste_csv_dateien(DATEN_VERZEICHNIS, dateien, MAX_DATEIEN);
@@ -125,6 +146,9 @@ static int waehle_datenbank(Datenbank *datenbank) {
     return 0;
 }
 
+// Robin
+//Durchsucht die geladene Datenbank nach einer ID und liefert den Eintrag
+//Dient als Grundlage für das Hinzufügen von Artikeln zur Liste
 static DatenbankEintrag *finde_eintrag(Datenbank *datenbank, int kennung) {
     if (!datenbank) return NULL;
     for (int i = 0; i < datenbank->anzahl; i++) {
@@ -133,6 +157,9 @@ static DatenbankEintrag *finde_eintrag(Datenbank *datenbank, int kennung) {
     return NULL;
 }
 
+// Robin
+//Fügt der Liste einen Artikel aus der Datenbank hinzu
+//Übernimmt Artikel und Anbieter in die lokale Einkaufsliste
 static void fuege_artikel_hinzu(Datenbank *datenbank, char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], int *anzahl) {
     if (*anzahl >= MAX_LISTENEINTRAEGE) {
         printf("Die Liste ist voll! (max. %d Einträge)\n", MAX_LISTENEINTRAEGE);
@@ -172,6 +199,9 @@ static void fuege_artikel_hinzu(Datenbank *datenbank, char eintraege[MAX_LISTENE
 }
 
 // --- Artikel löschen ---
+// Robin
+//Entfernt einen gewählten Artikel aus der Liste
+//Verschiebt nachfolgende Einträge um die Lücke zu schließen
 static void entferne_artikel(char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], int *anzahl) {
     if (*anzahl == 0) {
         printf("Die Liste ist leer, nichts zu löschen.\n");
@@ -203,6 +233,9 @@ static void entferne_artikel(char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN], i
 }
 
 // --- Hauptmenü: Liste bearbeiten ---
+// Robin
+//Steuert das Menü zum Bearbeiten der Einkaufsliste
+//Ermöglicht Anzeigen Hinzufügen Löschen und Speichern von Einträgen
 void bearbeite_liste(const char *dateiname) {
     char eintraege[MAX_LISTENEINTRAEGE][MAX_ZEICHEN];
     int anzahl = lade_liste(dateiname, eintraege);

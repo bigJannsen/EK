@@ -7,6 +7,9 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+// Philipp
+//Entfernt führende und nachfolgende Leerzeichen in einem Textpuffer
+//Bereitet Nutzereingaben für weitere Verarbeitung vor ohne den Inhalt zu verändern
 static void entferne_leerraum(char *text) {
     if (text == NULL) {
         return;
@@ -25,6 +28,9 @@ static void entferne_leerraum(char *text) {
     }
 }
 
+// Philipp
+//Liest eine Zeile von stdin in einen Puffer ein und entfernt Zeilenumbrüche
+//Sichert gegen fehlerhafte Eingaben ab indem ein leerer String erzeugt wird
 static void lese_zeile(char *puffer, size_t groesse) {
     if (puffer == NULL || groesse == 0) {
         return;
@@ -37,6 +43,9 @@ static void lese_zeile(char *puffer, size_t groesse) {
     puffer[strcspn(puffer, "\r\n")] = '\0';
 }
 
+// Robin
+//Formatiert einen Mengenwert als Text mit gekürzten Nachkommastellen
+//Bereitet Mengenangaben für Ausgaben und Dateispeicherungen vor
 void formatiere_mengenwert(double wert, char *ziel, size_t groesse) {
     if (ziel == NULL || groesse == 0) {
         return;
@@ -56,6 +65,9 @@ void formatiere_mengenwert(double wert, char *ziel, size_t groesse) {
     }
 }
 
+// Alen
+//Prüft eine eingegebene Mengeneinheit und wandelt sie in ein Standardformat um
+//Passt bei Bedarf auch den Zahlenwert an um konsistente Einheiten zu gewährleisten
 int normalisiere_mengeneinheit(const char *eingabe, char *ausgabe, size_t groesse, double *wert) {
     if (eingabe == NULL || ausgabe == NULL || groesse == 0 || wert == NULL) {
         return -1;
@@ -96,6 +108,9 @@ int normalisiere_mengeneinheit(const char *eingabe, char *ausgabe, size_t groess
     return -1;
 }
 
+// Alen
+//Konvertiert einen Text mit Mengenangabe in eine Gleitkommazahl
+//Unterstützt Komma als Dezimaltrennzeichen und stellt fehlerhafte Eingaben fest
 int lese_mengenwert_text(const char *text, double *wert) {
     if (text == NULL || wert == NULL) {
         return -1;
@@ -117,6 +132,9 @@ int lese_mengenwert_text(const char *text, double *wert) {
     return 0;
 }
 
+// Alen
+//Lädt eine CSV Datei in die Datenbankstruktur und validiert jeden Eintrag
+//Ignoriert fehlerhafte Zeilen und übernimmt gültige Datensätze in den Speicher
 int lade_datenbank(const char *dateipfad, Datenbank *datenbank) {
     if (dateipfad == NULL || datenbank == NULL) {
         return -1;
@@ -183,6 +201,9 @@ int lade_datenbank(const char *dateipfad, Datenbank *datenbank) {
     return 0;
 }
 
+// Alen
+//Schreibt alle Datensätze der geladenen Datenbank in die verknüpfte Datei
+//Verwendet formatierte Mengenwerte um konsistente CSV Einträge zu erzeugen
 int speichere_datenbank(const Datenbank *datenbank) {
     if (datenbank == NULL) {
         return -1;
@@ -201,6 +222,9 @@ int speichere_datenbank(const Datenbank *datenbank) {
     return 0;
 }
 
+// Robin
+//Gibt den Inhalt der Datenbank tabellarisch auf der Konsole aus
+//Zeigt formatierte Mengen und Einheiten zur besseren Lesbarkeit an
 void zeige_datenbank(const Datenbank *datenbank) {
     if (datenbank == NULL) {
         return;
@@ -229,6 +253,9 @@ void zeige_datenbank(const Datenbank *datenbank) {
     printf("=============================================\n");
 }
 
+// Philipp
+//Interaktiv bearbeitet einen einzelnen Datensatz anhand von Nutzereingaben
+//Erlaubt Änderungen an Kennung Preis Menge und Einheit mit Validierung
 int bearbeite_datenbankeintrag(Datenbank *datenbank, int eintrags_index) {
     if (datenbank == NULL || eintrags_index < 0 || eintrags_index >= datenbank->anzahl) {
         return -1;
@@ -294,6 +321,9 @@ int bearbeite_datenbankeintrag(Datenbank *datenbank, int eintrags_index) {
     return 0;
 }
 
+// Philipp
+//Fragt wiederholt eine numerische Auswahl vom Benutzer ab
+//Sichert die Eingabe ab indem nur valide Ganzzahlen akzeptiert werden
 static int lese_auswahl(const char *hinweis) {
     char puffer[32];
     int wiederhole_eingabe = 1;
@@ -312,6 +342,9 @@ static int lese_auswahl(const char *hinweis) {
     return 0;
 }
 
+// Alen
+//Steuert das Konsolenmenü zur Verwaltung der Datenbank
+//Erlaubt das Anzeigen Bearbeiten und Speichern von Datensätzen
 void bearbeite_datenbank(Datenbank *datenbank) {
     if (datenbank == NULL) {
         return;
@@ -373,6 +406,9 @@ void bearbeite_datenbank(Datenbank *datenbank) {
     }
 }
 
+// Robin
+//Prüft ob ein Dateiname auf die Erweiterung csv endet
+//Hilft bei der Filterung passender Dateien in Verzeichnissen
 static int hat_csv_endung(const char *name) {
     size_t laenge = strlen(name);
     if (laenge < 4) {
@@ -388,6 +424,9 @@ static int hat_csv_endung(const char *name) {
     return 0;
 }
 
+// Robin
+//Durchsucht ein Verzeichnis nach CSV Dateien und speichert die Pfade
+//Begrenzt die Anzahl der Ergebnisse auf die vorgegebene Maximalliste
 int liste_csv_dateien(const char *verzeichnis, char dateien[][DB_MAX_DATEINAME], int max_dateien) {
     if (verzeichnis == NULL || dateien == NULL || max_dateien <= 0) {
         return -1;

@@ -25,6 +25,9 @@ typedef struct {
     Einheitstyp typ;
 } Mengenangabe;
 
+// Robin
+//Liest eine Zeile von stdin und entfernt Zeilenumbrüche
+//Sorgt für saubere Texteingaben bei den Vergleichsmenüs
 static void lese_zeile(char *puffer, size_t groesse) {
     if (!puffer || groesse == 0) return;
     if (!fgets(puffer, (int)groesse, stdin)) {
@@ -35,6 +38,9 @@ static void lese_zeile(char *puffer, size_t groesse) {
     puffer[strcspn(puffer, "\r\n")] = '\0';
 }
 
+// Robin
+//Fragt eine Ganzzahl vom Benutzer ab und wiederholt bei Fehlern
+//Stellt sicher dass Menüauswahlen gültig sind
 static int lese_ganzzahl(const char *hinweis) {
     char puffer[64];
     for (;;) {
@@ -48,6 +54,9 @@ static int lese_ganzzahl(const char *hinweis) {
     }
 }
 
+// Robin
+//Ermittelt den Dateinamen aus einem Pfad
+//Vereinfacht die Ausgabe von Datenbanklisten für den Benutzer
 static const char *basisname_von(const char *pfad) {
     const char *schraegstrich = strrchr(pfad, '/');
 #ifdef _WIN32
@@ -58,6 +67,9 @@ static const char *basisname_von(const char *pfad) {
     return schraegstrich + 1;
 }
 
+// Robin
+//Liefert eine menschenlesbare Bezeichnung für eine Einheit
+//Ermöglicht verständliche Ausgaben im Vergleichsmenü
 static const char *einheits_bezeichnung(Einheitstyp typ) {
     switch (typ) {
         case EINHEIT_GRAMM: return "g";
@@ -67,6 +79,9 @@ static const char *einheits_bezeichnung(Einheitstyp typ) {
     }
 }
 
+// Robin
+//Ordnet einen Einheitstext einem internen Typ zu und liefert Umrechnungsfaktoren
+//Erlaubt Vergleiche über unterschiedliche Mengeneinheiten hinweg
 static int normalisiere_einheit(const char *einheit, Einheitstyp *typ, double *faktor) {
     if (!einheit || !typ || !faktor) return -1;
     if (strcmp(einheit, "g") == 0) {
@@ -97,6 +112,9 @@ static int normalisiere_einheit(const char *einheit, Einheitstyp *typ, double *f
     return -1;
 }
 
+// Robin
+//Berechnet die normierte Menge eines Datenbankeintrags
+//Ermittelt Einheitstyp und Menge für Preisberechnungen
 static int ermittle_mengenangabe(const DatenbankEintrag *eintrag, Mengenangabe *mengenangabe) {
     if (!eintrag || !mengenangabe) return -1;
     if (eintrag->menge_wert <= 0.0) return -1;
@@ -108,6 +126,9 @@ static int ermittle_mengenangabe(const DatenbankEintrag *eintrag, Mengenangabe *
     return 0;
 }
 
+// Robin
+//Passt Einheiten für die Anzeige an
+//Formatiert Abkürzungen für eine lesbare Ausgabe
 static const char *anzeige_einheit(const char *einheit) {
     if (!einheit) return "";
     if (strcmp(einheit, "stk") == 0) return "Stk";
@@ -116,6 +137,9 @@ static const char *anzeige_einheit(const char *einheit) {
     return einheit;
 }
 
+// Robin
+//Erstellt einen Beschreibungstext für Menge und Einheit eines Eintrags
+//Wird für detailreiche Ausgaben im Vergleich verwendet
 static void beschreibe_menge(const DatenbankEintrag *eintrag, char *ziel, size_t groesse) {
     if (!ziel || groesse == 0 || !eintrag) return;
     char wert[32];
@@ -123,6 +147,9 @@ static void beschreibe_menge(const DatenbankEintrag *eintrag, char *ziel, size_t
     snprintf(ziel, groesse, "%s %s", wert, anzeige_einheit(eintrag->menge_einheit));
 }
 
+// Robin
+//Listet verfügbare Datenbanken und speichert den Pfad der Auswahl
+//Fragt wiederholt nach einer gültigen Eingabe falls nötig
 static int waehle_datenbank_pfad(const char *verzeichnis, char *ausgabepfad, size_t ausgabe_groesse) {
     char dateien[MAX_DATEIEN][DB_MAX_DATEINAME];
     int anzahl = liste_csv_dateien(verzeichnis, dateien, MAX_DATEIEN);
@@ -145,6 +172,9 @@ static int waehle_datenbank_pfad(const char *verzeichnis, char *ausgabepfad, siz
     }
 }
 
+// Robin
+//Sucht in der Datenbank nach einem Eintrag mit bestimmter ID
+//Ermöglicht zielgerichteten Zugriff bei Vergleichen
 static DatenbankEintrag *finde_eintrag_nach_id(Datenbank *datenbank, int kennung) {
     if (!datenbank) return NULL;
     for (int i = 0; i < datenbank->anzahl; i++) {
@@ -153,6 +183,9 @@ static DatenbankEintrag *finde_eintrag_nach_id(Datenbank *datenbank, int kennung
     return NULL;
 }
 
+// Robin
+//Fordert den Benutzer zur Auswahl eines Eintrags anhand der ID auf
+//Verhindert doppelte Auswahl bestimmter Einträge
 static DatenbankEintrag *waehle_eintrag(Datenbank *datenbank, const char *hinweis, int ausgeschlossene_id) {
     for (;;) {
         int kennung = lese_ganzzahl(hinweis);
@@ -166,6 +199,9 @@ static DatenbankEintrag *waehle_eintrag(Datenbank *datenbank, const char *hinwei
     }
 }
 
+// Robin
+//Erfragt eine gewünschte Menge in einer bestimmten Einheit
+//Validiert Eingaben und wandelt Komma in Punkt um
 static double lese_menge(Einheitstyp typ) {
     char puffer[64];
     const char *einheit = einheits_bezeichnung(typ);
@@ -185,6 +221,9 @@ static double lese_menge(Einheitstyp typ) {
     }
 }
 
+// Robin
+//Trimmt führende und nachgestellte Leerzeichen von Texten
+//Bereitet Listeneinträge auf weitere Verarbeitung vor
 static void entferne_leerraum(char *text) {
     if (!text) return;
     char *anfang = text;
@@ -197,6 +236,9 @@ static void entferne_leerraum(char *text) {
     }
 }
 
+// Robin
+//Zerlegt einen Einkaufslisteeintrag in Artikel und Anbieter
+//Bereitet Daten für den Abgleich mit der Datenbank vor
 static void teile_listeneintrag(const char *zeile, char *artikel, size_t artikel_groesse, char *anbieter, size_t anbieter_groesse) {
     if (!zeile) {
         if (artikel && artikel_groesse > 0) artikel[0] = '\0';
@@ -226,6 +268,9 @@ static void teile_listeneintrag(const char *zeile, char *artikel, size_t artikel
     if (anbieter) entferne_leerraum(anbieter);
 }
 
+// Robin
+//Lädt die Einkaufsliste aus einer Datei in ein Array
+//Erkennt die Anzahl der gespeicherten Positionen
 static int lade_einkaufsliste(const char *dateiname, char eintraege[LISTE_MAX_EINTRAEGE][LISTE_MAX_ZEICHEN]) {
     FILE *datei = fopen(dateiname, "r");
     if (!datei) return 0;
@@ -238,6 +283,9 @@ static int lade_einkaufsliste(const char *dateiname, char eintraege[LISTE_MAX_EI
     return anzahl;
 }
 
+// Robin
+//Speichert die aktuelle Einkaufsliste wieder in die Datei
+//Überschreibt vorhandene Inhalte mit dem aktuellen Stand
 static void speichere_einkaufsliste(const char *dateiname, char eintraege[LISTE_MAX_EINTRAEGE][LISTE_MAX_ZEICHEN], int anzahl) {
     FILE *datei = fopen(dateiname, "w");
     if (!datei) {
@@ -250,6 +298,9 @@ static void speichere_einkaufsliste(const char *dateiname, char eintraege[LISTE_
     fclose(datei);
 }
 
+// Robin
+//Vergleicht zwei ausgewählte Produkte anhand normierter Mengen
+//Berechnet Preise pro Einheit und hebt das günstigere Angebot hervor
 static void vergleiche_einzeln(Datenbank *datenbank) {
     if (!datenbank) return;
     if (datenbank->anzahl < 2) {
@@ -300,6 +351,9 @@ static void vergleiche_einzeln(Datenbank *datenbank) {
     }
 }
 
+// Robin
+//Vergleicht jeden Artikel der Einkaufsliste mit allen Datenbankeinträgen
+//Aktualisiert die Liste optional mit den günstigsten Angeboten
 static void vergleiche_einkaufsliste(Datenbank *datenbank, const char *listen_datei) {
     if (!datenbank || !listen_datei) return;
     char eintraege[LISTE_MAX_EINTRAEGE][LISTE_MAX_ZEICHEN];
@@ -387,6 +441,9 @@ static void vergleiche_einkaufsliste(Datenbank *datenbank, const char *listen_da
     }
 }
 
+// Robin
+//Startet das Menü für Einzel und Listen Preisvergleiche
+//Lädt die gewünschte Datenbank und führt den gewählten Vergleich durch
 void preisvergleich_menue(const char *verzeichnis) {
     if (!verzeichnis || verzeichnis[0] == '\0') verzeichnis = DATEN_VERZEICHNIS;
     printf("[1] Einzelvergleich\n");

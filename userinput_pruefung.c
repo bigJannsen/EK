@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Philipp
+//Prüft ob ein Zeichen druckbar und erlaubt ist
+//Schließt problematische Steuerzeichen und Sonderzeichen aus
 static int ist_druckbares_zeichen(unsigned char zeichen) {
     if (zeichen < 32 || zeichen == 127) {
         return 0;
@@ -22,6 +25,9 @@ static int ist_druckbares_zeichen(unsigned char zeichen) {
     }
 }
 
+// Philipp
+//Überprüft einen Pflichttext auf Länge und erlaubte Zeichen
+//Verhindert ungültige Eingaben durch frühzeitige Validierung
 // Prüft, ob ein Text innerhalb der erlaubten Länge bleibt und nur zulässige druckbare Zeichen enthält.
 int pruefe_text_eingabe(const char *eingabe, size_t max_laenge) {
     if (eingabe == NULL) {
@@ -40,6 +46,9 @@ int pruefe_text_eingabe(const char *eingabe, size_t max_laenge) {
     return 0;
 }
 
+// Philipp
+//Validiert optionale Texte mit denselben Regeln wie Pflichtfelder
+//Akzeptiert leere Eingaben ohne weitere Prüfung
 // Prüft optionalen Text auf erlaubte Länge und Zeichen, erlaubt aber leere Eingaben.
 int pruefe_optionalen_text(const char *eingabe, size_t max_laenge) {
     if (eingabe == NULL || *eingabe == '\0') {
@@ -48,6 +57,9 @@ int pruefe_optionalen_text(const char *eingabe, size_t max_laenge) {
     return pruefe_text_eingabe(eingabe, max_laenge);
 }
 
+// Philipp
+//Untersucht Dateinamen auf erlaubte Zeichen und verbotene Muster
+//Schützt vor Pfadausbrüchen und ungültigen Bezeichnern
 // Validiert Dateinamen auf zulässige Zeichen und verhindert Pfadausbrüche.
 int pruefe_dateiname(const char *eingabe, size_t max_laenge) {
     if (pruefe_text_eingabe(eingabe, max_laenge) != 0) {
@@ -64,6 +76,9 @@ int pruefe_dateiname(const char *eingabe, size_t max_laenge) {
     return 0;
 }
 
+// Philipp
+//Validiert Ganzzahlen hinsichtlich Struktur Länge und Wertebereich
+//Lehnt Eingaben mit unzulässigen Zeichen oder außerhalb des Bereichs ab
 // Prüft Ganzzahlen auf erlaubte Länge, korrekten Aufbau und Wertebereich.
 int pruefe_ganzzahl_eingabe(const char *eingabe, long min_wert, long max_wert) {
     if (eingabe == NULL) {
@@ -96,6 +111,9 @@ int pruefe_ganzzahl_eingabe(const char *eingabe, long min_wert, long max_wert) {
     return 0;
 }
 
+// Philipp
+//Überprüft Dezimalzahlen auf Format Wertebereich und Dezimalstellenanzahl
+//Ersetzt Kommas durch Punkte und erkennt unzulässige Eingaben
 // Prüft Dezimalzahlen auf korrektes Format, Dezimaltrennzeichen, maximale Stellenzahl und Wertebereich.
 int pruefe_dezimalzahl_eingabe(const char *eingabe, double min_wert, double max_wert, int max_dezimalstellen) {
     if (eingabe == NULL || max_dezimalstellen < 0) {
@@ -156,6 +174,9 @@ int pruefe_dezimalzahl_eingabe(const char *eingabe, double min_wert, double max_
     return 0;
 }
 
+// Philipp
+//Stellt sicher dass optionale Flags nur 0 oder 1 enthalten
+//Erlaubt auch leere Eingaben für nicht gesetzte Werte
 // Prüft, ob eine optionale Eingabe ausschließlich den Flagwert 0 oder 1 enthält.
 int pruefe_flag_eingabe(const char *eingabe) {
     if (eingabe == NULL || *eingabe == '\0') {
