@@ -3,6 +3,9 @@
 #include <string.h>
 #include "druck_einkauf.h"
 
+// Robin
+//Druckt eine bestehende Einkaufsliste im Terminal aus
+//Liest die Datei zeilenweise und versieht jeden Eintrag mit einer Nummer
 /**
  * Gibt den Inhalt einer gespeicherten Einkaufsliste aus.
  * Die Datei wird zeilenweise gelesen und mit Zeilennummern ausgegeben.

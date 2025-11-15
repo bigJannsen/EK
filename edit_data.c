@@ -7,6 +7,9 @@
 
 #define MAX_DATEIEN 128
 
+// Philipp
+//Wartet darauf dass der Benutzer Enter drückt
+//Sorgt für kurze Pausen damit Ausgaben gelesen werden können
 static void warte_auf_enter(void) {
     printf("\nWeiter mit Enter ...");
     int c;
@@ -14,6 +17,9 @@ static void warte_auf_enter(void) {
     }
 }
 
+// Philipp
+//Liest eine ganze Zeile von stdin und entfernt Zeilenumbrüche
+//Bewahrt den Puffer bei fehlgeschlagener Eingabe vor undefiniertem Inhalt
 static void lese_zeile(char *puffer, size_t groesse) {
     if (!puffer || groesse == 0) return;
     if (!fgets(puffer, (int)groesse, stdin)) {
@@ -24,6 +30,9 @@ static void lese_zeile(char *puffer, size_t groesse) {
     puffer[strcspn(puffer, "\r\n")] = '\0';
 }
 
+// Philipp
+//Fragt wiederholt eine numerische Auswahl vom Nutzer ab
+//Erlaubt nur gültige Ganzzahlen als Ergebnis
 static int lese_auswahl(const char *hinweis) {
     char puffer[32];
     for (;;) {
@@ -36,6 +45,9 @@ static int lese_auswahl(const char *hinweis) {
     }
 }
 
+// Philipp
+//Ermittelt den Dateinamen ohne Pfadbestandteile plattformübergreifend
+//Vereinfacht die Anzeige von Dateilisten für den Benutzer
 static const char *basisname_von(const char *pfad) {
     const char *schraegstrich = strrchr(pfad, '/');
 #ifdef _WIN32
@@ -46,6 +58,9 @@ static const char *basisname_von(const char *pfad) {
     return schraegstrich + 1;
 }
 
+// Philipp
+//Versucht eine ausgewählte Datenbankdatei zu laden
+//Meldet Fehler und bricht ab wenn das Laden scheitert
 static int behandle_datenbankdatei(const char *dateipfad, Datenbank *datenbank) {
     if (!datenbank) return -1;
     if (lade_datenbank(dateipfad, datenbank) != 0) {
@@ -56,6 +71,9 @@ static int behandle_datenbankdatei(const char *dateipfad, Datenbank *datenbank) 
     return 0;
 }
 
+// Philipp
+//Listet verfügbare Datenbankdateien und lädt die gewählte Option
+//Prüft die Eingabe auf Gültigkeit bevor der Ladevorgang startet
 static int waehle_datenbank(const char *verzeichnis, Datenbank *datenbank) {
     char dateien[MAX_DATEIEN][DB_MAX_DATEINAME];
     int anzahl = liste_csv_dateien(verzeichnis, dateien, MAX_DATEIEN);
@@ -82,6 +100,9 @@ static int waehle_datenbank(const char *verzeichnis, Datenbank *datenbank) {
     return behandle_datenbankdatei(dateien[auswahl - 1], datenbank);
 }
 
+// Philipp
+//Steuert das Menü zum Bearbeiten der Preisdatenbank
+//Ermöglicht Laden Sichern und Verwalten von Artikeldaten
 void bearbeite_daten_menue(const char *verzeichnis) {
     if (!verzeichnis || verzeichnis[0] == '\0') {
         verzeichnis = DATEN_VERZEICHNIS;
