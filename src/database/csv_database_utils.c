@@ -1,7 +1,7 @@
-#include "csv_database_utils.h"
+#include "database/csv_database_utils.h"
 
-#include "quantity_unit_utils.h"
-#include "text_input_utils.h"
+#include "database/quantity_unit_utils.h"
+#include "database/text_input_utils.h"
 
 #include <ctype.h>
 #include <stdio.h>

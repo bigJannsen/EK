@@ -2,7 +2,7 @@
 #define CSV_DATABASE_UTILS_H
 
 // CSV-Parsing, Speicherung und Dateisuche für Datenbanken
-#include "database_core_defs.h"
+#include "database/database_core_defs.h"
 
 int lade_datenbank(const char *dateipfad, Datenbank *datenbank);
 int speichere_datenbank(const Datenbank *datenbank);

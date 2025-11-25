@@ -10,11 +10,15 @@ else()
     add_compile_options(-Wall -Wextra -pedantic)
 endif()
 
-file(GLOB SRC_FILES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.c)
+file(GLOB SRC_FILES CONFIGURE_DEPENDS
+        ${CMAKE_SOURCE_DIR}/src/*.c
+        ${CMAKE_SOURCE_DIR}/src/database/*.c)
 
 add_executable(einkaufsprojekt ${SRC_FILES})
 
-target_include_directories(einkaufsprojekt PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(einkaufsprojekt PUBLIC
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/include/database)
 
 file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/data" DATA_DIR_PATH)
 file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/web" WEB_DIR_PATH)
