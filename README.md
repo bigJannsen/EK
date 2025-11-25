@@ -1,6 +1,6 @@
 # EK – Einkaufslisten-Manager
 
-Ein Projekt zur Verwaltung von Einkaufslisten, Preisvergleichen und Datenbearbeitung – geschrieben in **C** mit optionaler **Web-Komponente**.
+Ein Projekt zur Verwaltung von Einkaufslisten und Datenbearbeitung – geschrieben in **C** mit optionaler **Web-Komponente**.
 
 ---
 
@@ -19,19 +19,17 @@ Ein Projekt zur Verwaltung von Einkaufslisten, Preisvergleichen und Datenbearbei
 
 ## Über das Projekt
 
-**EK** ist ein C-basiertes System zur Verwaltung von Einkaufslisten und Preisvergleichen.  
-Es erlaubt das Anlegen, Bearbeiten und Löschen von Einträgen sowie die Integration einer einfachen Weboberfläche.  
+**EK** ist ein C-basiertes System zur Verwaltung von Einkaufslisten.
+Es erlaubt das Anlegen, Bearbeiten und Löschen von Einträgen sowie die Integration einer einfachen Weboberfläche.
 Das Ziel ist es, den Einkaufsprozess zu digitalisieren und strukturierter zu gestalten.
 
 ---
 
 ## Funktionen
 
-- Einkaufsliste verwalten – Artikel hinzufügen, bearbeiten, löschen  
-- CRUD-Datenoperationen – Create, Read, Update, Delete auf Artikeldaten  
-- Preisvergleich – vergleicht Preise verschiedener Produkte  
+- Einkaufsliste im Browser verwalten – Artikel hinzufügen, bearbeiten, löschen
+- CRUD-Datenoperationen – Create, Read, Update, Delete auf Artikeldaten
 - Webserver – optionales Frontend im Browser --> Technologieschema: MVC-Controller
-- Druckfunktion – erzeugt eine ausgabefertige Einkaufsliste  
 
 ---
 
@@ -95,10 +93,6 @@ EK/
 │
 ├─ include/
 │   ├─ crud_database.h
-│   ├─ edit_data.h
-│   ├─ edit_list.h
-│   ├─ preis_vergleich.h
-│   ├─ druck_einkauf.h
 │   ├─ userinput_pruefung.h
 │   ├─ web_server.h
 │   └─ windows/
@@ -106,11 +100,7 @@ EK/
 │
 ├─ src/
 │   ├─ crud_database.c
-│   ├─ druck_einkauf.c
-│   ├─ edit_data.c
-│   ├─ edit_list.c
 │   ├─ main.c
-│   ├─ preis_vergleich.c
 │   ├─ userinput_pruefung.c
 │   └─ web_server.c
 │
