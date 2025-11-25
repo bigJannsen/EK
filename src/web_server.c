@@ -1,8 +1,8 @@
 #include "web_server.h"
 #include "config.h"
-#include "database_controller.h"
-#include "quantity_unit_utils.h"
-#include "text_input_utils.h"
+#include "database/database_controller.h"
+#include "database/quantity_unit_utils.h"
+#include "database/text_input_utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>

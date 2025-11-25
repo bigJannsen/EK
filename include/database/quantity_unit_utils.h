@@ -3,7 +3,7 @@
 
 // Funktionen zum Normalisieren, Konvertieren und Formatieren von Mengenangaben
 #include <stddef.h>
-#include "database_core_defs.h"
+#include "database/database_core_defs.h"
 
 void formatiere_mengenwert(double wert, char *ziel, size_t groesse);
 int lese_mengenwert_text(const char *text, double *wert);

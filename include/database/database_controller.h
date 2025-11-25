@@ -2,9 +2,9 @@
 #define DATABASE_CONTROLLER_H
 
 // High-Level-Steuerung für Datenbankoperationen
-#include "csv_database_utils.h"
-#include "quantity_unit_utils.h"
-#include "text_input_utils.h"
+#include "database/csv_database_utils.h"
+#include "database/quantity_unit_utils.h"
+#include "database/text_input_utils.h"
 
 int load_database(const char *dateipfad, Datenbank *datenbank);
 int save_database(const Datenbank *datenbank);
