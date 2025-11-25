@@ -4,7 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef _WIN32
+#include "windows/dirent.h"
+#else
 #include <dirent.h>
+#endif
 #include <sys/stat.h>
 
 // Philipp

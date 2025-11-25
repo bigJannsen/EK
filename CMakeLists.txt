@@ -4,27 +4,21 @@ project(Einkaufsprojekt C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-if (WIN32)
-    include_directories(${CMAKE_SOURCE_DIR}/include)
-endif()
-
 if (MSVC)
     add_compile_options(/W4)
 else()
     add_compile_options(-Wall -Wextra -pedantic)
 endif()
 
-set(SOURCES
-        main.c
-        web_server.c
-        crud_database.c
-        userinput_pruefung.c)
+file(GLOB SRC_FILES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.c)
 
-add_executable(einkaufsprojekt ${SOURCES})
+add_executable(einkaufsprojekt ${SRC_FILES})
+
+target_include_directories(einkaufsprojekt PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/data" DATA_DIR_PATH)
 file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/web" WEB_DIR_PATH)
-file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/einkaufsliste.txt" SHOPPING_LIST_PATH_VALUE)
+file(TO_CMAKE_PATH "${DATA_DIR_PATH}/einkaufsliste.txt" SHOPPING_LIST_PATH_VALUE)
 
 target_compile_definitions(einkaufsprojekt PRIVATE
         DATEN_VERZEICHNIS="${DATA_DIR_PATH}"

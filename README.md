@@ -99,23 +99,29 @@ EK/
 │   ├─ edit_list.h
 │   ├─ preis_vergleich.h
 │   ├─ druck_einkauf.h
-│   └─ web_server.h
+│   ├─ userinput_pruefung.h
+│   ├─ web_server.h
+│   └─ windows/
+│       └─ dirent.h
+│
+├─ src/
+│   ├─ crud_database.c
+│   ├─ druck_einkauf.c
+│   ├─ edit_data.c
+│   ├─ edit_list.c
+│   ├─ main.c
+│   ├─ preis_vergleich.c
+│   ├─ userinput_pruefung.c
+│   └─ web_server.c
 │
 ├─ data/
+│   ├─ datenbanken.csv
 │   └─ einkaufsliste.txt
 │
 ├─ web/
 │   ├─ index.html
 │   ├─ styles.css
 │   └─ script.js
-│
-├─ main.c
-├─ crud_database.c
-├─ edit_data.c
-├─ edit_list.c
-├─ preis_vergleich.c
-├─ druck_einkauf.c
-└─ web_server.c
 
 -------------- TODO ----------------
 

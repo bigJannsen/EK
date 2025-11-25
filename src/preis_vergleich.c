@@ -11,7 +11,7 @@
 #define MAX_DATEIEN 128
 #define LISTE_MAX_EINTRAEGE 100
 #define LISTE_MAX_ZEICHEN 256
-#define EINKAUFSLISTE_DATEI "einkaufsliste.txt"
+#define EINKAUFSLISTE_DATEI DATEN_VERZEICHNIS "/einkaufsliste.txt"
 
 typedef enum {
     EINHEIT_UNBEKANNT,

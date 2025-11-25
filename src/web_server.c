@@ -40,7 +40,7 @@ typedef int socket_t;
 #endif
 
 #ifndef SHOPPING_LIST_PATH
-#define SHOPPING_LIST_PATH "einkaufsliste.txt"
+#define SHOPPING_LIST_PATH DATA_DIRECTORY "/einkaufsliste.txt"
 #endif
 
 #define SERVER_PORT 8081
