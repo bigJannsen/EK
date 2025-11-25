@@ -12,13 +12,17 @@ endif()
 
 file(GLOB SRC_FILES CONFIGURE_DEPENDS
         ${CMAKE_SOURCE_DIR}/src/*.c
+        ${CMAKE_SOURCE_DIR}/src/webserver/*.c
+        ${CMAKE_SOURCE_DIR}/src/webserver/api/*.c
         ${CMAKE_SOURCE_DIR}/src/database/*.c)
 
 add_executable(einkaufsprojekt ${SRC_FILES})
 
 target_include_directories(einkaufsprojekt PUBLIC
         ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/include/database)
+        ${CMAKE_SOURCE_DIR}/include/database
+        ${CMAKE_SOURCE_DIR}/include/webserver
+        ${CMAKE_SOURCE_DIR}/include/webserver/api)
 
 file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/data" DATA_DIR_PATH)
 file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}/web" WEB_DIR_PATH)

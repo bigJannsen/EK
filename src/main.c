@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "config.h"
-#include "web_server.h"
+#include "webserver/web_core.h"
 
 // Alen
 //Startet den Serverprozess für die Anwendung
