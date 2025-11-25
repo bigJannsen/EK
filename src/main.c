@@ -1,10 +1,15 @@
 #include <stdio.h>
+
+#include "config.h"
 #include "web_server.h"
 
 // Alen
 //Startet den Serverprozess für die Anwendung
 //Ruft die HTTP Startfunktion auf ohne weitere Logik
 int main(void) {
+    config_init();
+    print_config();
+
     return run_server();
 }
 

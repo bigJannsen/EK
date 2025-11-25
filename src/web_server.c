@@ -1,4 +1,5 @@
 #include "web_server.h"
+#include "config.h"
 #include "crud_database.h"
 #include "userinput_pruefung.h"
 
@@ -10,6 +11,7 @@
 #include <math.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #ifdef _WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -43,14 +45,19 @@ typedef int socket_t;
 #define SHOPPING_LIST_PATH DATA_DIRECTORY "/einkaufsliste.txt"
 #endif
 
-#define SERVER_PORT 8081
 #define MAX_REQUEST_SIZE 65536
 #define MAX_PARAMS 64
 #define MAX_KEY_LEN 64
 #define MAX_VALUE_LEN 512
 #define MAX_DB_FILES 128
-#define SHOPPING_LIST_MAX_ITEMS 100
-#define SHOPPING_LIST_MAX_LEN 256
+
+#ifndef SHOPPING_LIST_MAX_ITEMS
+#define SHOPPING_LIST_MAX_ITEMS CONFIG_DEFAULT_MAX_ARTICLES
+#endif
+
+#ifndef SHOPPING_LIST_MAX_LEN
+#define SHOPPING_LIST_MAX_LEN CONFIG_DEFAULT_MAX_STRING_LENGTH
+#endif
 
 typedef struct {
     char key[MAX_KEY_LEN];
@@ -1553,7 +1560,7 @@ static int initialize_socket(socket_t *out_socket) {
     memset(&addr, 0, sizeof addr);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr.sin_port = htons(SERVER_PORT);
+    addr.sin_port = htons((uint16_t) g_config.webserver_port);
     if (bind(server, (struct sockaddr *)&addr, sizeof addr) == SOCKET_ERROR) {
         close_socket(server);
 #ifdef _WIN32
@@ -1578,7 +1585,7 @@ int run_server(void) {
         fprintf(stderr, "Server konnte nicht gestartet werden\n");
         return 1;
     }
-    printf("Server läuft auf http://localhost:%d\n", SERVER_PORT);
+    printf("Server läuft auf http://localhost:%d\n", g_config.webserver_port);
     for (;;) {
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof client_addr;
