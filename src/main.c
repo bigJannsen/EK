@@ -16,10 +16,9 @@ int main(void) {
 
 
 
-/* Antwort: Das Programm startet in main nur den run_server() aus web_server.c. web_server.c
- * verarbeitet alle HTTP-Anfragen selbst und nutzt dafür direkt die Funktionen aus
- * crud_database.c; die Module edit_data.c, edit_list.c und preis_vergleich.c werden auf
- * diesem Weg nicht eingebunden. */
+/* Hinweis: Das Programm startet in main nur den run_server() aus web_server.c.
+ * web_server.c verarbeitet alle HTTP-Anfragen selbst und nutzt dafür direkt die
+ * Funktionen aus crud_database.c und userinput_pruefung.c. */
 
 /*
 Windows:
