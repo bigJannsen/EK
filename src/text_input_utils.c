@@ -1,15 +1,13 @@
-// Diese Datei prüft Nutzereingaben auf Extremwerte, korrekte Dezimaltrennzeichen, unerlaubte Zeichen in Zahlenfeldern sowie problematische Sonderzeichen.
-#include "userinput_pruefung.h"
+#include "text_input_utils.h"
 
 #include <ctype.h>
-#include <limits.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
-// Philipp
-//Prüft ob ein Zeichen druckbar und erlaubt ist
-//Schließt problematische Steuerzeichen und Sonderzeichen aus
+// Sammlung von Sanitizing- und Validierungsfunktionen für Texteingaben
+
 static int ist_druckbares_zeichen(unsigned char zeichen) {
     if (zeichen < 32 || zeichen == 127) {
         return 0;
@@ -25,10 +23,36 @@ static int ist_druckbares_zeichen(unsigned char zeichen) {
     }
 }
 
-// Philipp
-//Überprüft einen Pflichttext auf Länge und erlaubte Zeichen
-//Verhindert ungültige Eingaben durch frühzeitige Validierung
-// Prüft, ob ein Text innerhalb der erlaubten Länge bleibt und nur zulässige druckbare Zeichen enthält.
+void entferne_leerraum(char *text) {
+    if (text == NULL) {
+        return;
+    }
+    char *anfang = text;
+    while (*anfang != '\0' && isspace((unsigned char)*anfang)) {
+        anfang++;
+    }
+    if (anfang != text) {
+        memmove(text, anfang, strlen(anfang) + 1);
+    }
+    size_t laenge = strlen(text);
+    while (laenge > 0 && isspace((unsigned char)text[laenge - 1])) {
+        text[laenge - 1] = '\0';
+        laenge--;
+    }
+}
+
+void lese_zeile(char *puffer, size_t groesse) {
+    if (puffer == NULL || groesse == 0) {
+        return;
+    }
+    if (fgets(puffer, (int)groesse, stdin) == NULL) {
+        puffer[0] = '\0';
+        clearerr(stdin);
+        return;
+    }
+    puffer[strcspn(puffer, "\r\n")] = '\0';
+}
+
 int pruefe_text_eingabe(const char *eingabe, size_t max_laenge) {
     if (eingabe == NULL) {
         return -1;
@@ -46,10 +70,6 @@ int pruefe_text_eingabe(const char *eingabe, size_t max_laenge) {
     return 0;
 }
 
-// Philipp
-//Validiert optionale Texte mit denselben Regeln wie Pflichtfelder
-//Akzeptiert leere Eingaben ohne weitere Prüfung
-// Prüft optionalen Text auf erlaubte Länge und Zeichen, erlaubt aber leere Eingaben.
 int pruefe_optionalen_text(const char *eingabe, size_t max_laenge) {
     if (eingabe == NULL || *eingabe == '\0') {
         return 0;
@@ -57,10 +77,6 @@ int pruefe_optionalen_text(const char *eingabe, size_t max_laenge) {
     return pruefe_text_eingabe(eingabe, max_laenge);
 }
 
-// Philipp
-//Untersucht Dateinamen auf erlaubte Zeichen und verbotene Muster
-//Schützt vor Pfadausbrüchen und ungültigen Bezeichnern
-// Validiert Dateinamen auf zulässige Zeichen und verhindert Pfadausbrüche.
 int pruefe_dateiname(const char *eingabe, size_t max_laenge) {
     if (pruefe_text_eingabe(eingabe, max_laenge) != 0) {
         return -1;
@@ -76,10 +92,6 @@ int pruefe_dateiname(const char *eingabe, size_t max_laenge) {
     return 0;
 }
 
-// Philipp
-//Validiert Ganzzahlen hinsichtlich Struktur Länge und Wertebereich
-//Lehnt Eingaben mit unzulässigen Zeichen oder außerhalb des Bereichs ab
-// Prüft Ganzzahlen auf erlaubte Länge, korrekten Aufbau und Wertebereich.
 int pruefe_ganzzahl_eingabe(const char *eingabe, long min_wert, long max_wert) {
     if (eingabe == NULL) {
         return -1;
@@ -111,10 +123,6 @@ int pruefe_ganzzahl_eingabe(const char *eingabe, long min_wert, long max_wert) {
     return 0;
 }
 
-// Philipp
-//Überprüft Dezimalzahlen auf Format Wertebereich und Dezimalstellenanzahl
-//Ersetzt Kommas durch Punkte und erkennt unzulässige Eingaben
-// Prüft Dezimalzahlen auf korrektes Format, Dezimaltrennzeichen, maximale Stellenzahl und Wertebereich.
 int pruefe_dezimalzahl_eingabe(const char *eingabe, double min_wert, double max_wert, int max_dezimalstellen) {
     if (eingabe == NULL || max_dezimalstellen < 0) {
         return -1;
@@ -174,10 +182,6 @@ int pruefe_dezimalzahl_eingabe(const char *eingabe, double min_wert, double max_
     return 0;
 }
 
-// Philipp
-//Stellt sicher dass optionale Flags nur 0 oder 1 enthalten
-//Erlaubt auch leere Eingaben für nicht gesetzte Werte
-// Prüft, ob eine optionale Eingabe ausschließlich den Flagwert 0 oder 1 enthält.
 int pruefe_flag_eingabe(const char *eingabe) {
     if (eingabe == NULL || *eingabe == '\0') {
         return 0;
@@ -187,3 +191,4 @@ int pruefe_flag_eingabe(const char *eingabe) {
     }
     return -1;
 }
+

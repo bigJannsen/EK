@@ -18,7 +18,7 @@ int main(void) {
 
 /* Hinweis: Das Programm startet in main nur den run_server() aus web_server.c.
  * web_server.c verarbeitet alle HTTP-Anfragen selbst und nutzt dafür direkt die
- * Funktionen aus crud_database.c und userinput_pruefung.c. */
+ * Funktionen aus database_controller.c sowie den zugehörigen Hilfsmodulen. */
 
 /*
 Windows:

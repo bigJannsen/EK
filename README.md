@@ -92,16 +92,21 @@ EK/
 │  .gitignore
 │
 ├─ include/
-│   ├─ crud_database.h
-│   ├─ userinput_pruefung.h
+│   ├─ csv_database_utils.h
+│   ├─ database_controller.h
+│   ├─ database_core_defs.h
+│   ├─ quantity_unit_utils.h
+│   ├─ text_input_utils.h
 │   ├─ web_server.h
 │   └─ windows/
 │       └─ dirent.h
 │
 ├─ src/
-│   ├─ crud_database.c
+│   ├─ csv_database_utils.c
+│   ├─ database_controller.c
 │   ├─ main.c
-│   ├─ userinput_pruefung.c
+│   ├─ quantity_unit_utils.c
+│   ├─ text_input_utils.c
 │   └─ web_server.c
 │
 ├─ data/
